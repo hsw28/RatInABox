@@ -2,6 +2,8 @@ import numpy as np
 import scipy.io
 import argparse
 import itertools
+import scipy.io
+import scipy.stats as stats
 from envA_rectangle import simulate_envA
 from envB_oval import simulate_envB
 from CombinedPlaceTebcNeurons import CombinedPlaceTebcNeurons
@@ -51,8 +53,11 @@ Arguments:
                         Default is 'fixed'.
 
 Examples:
-    python main.py --balance_values 0.3,0.5,0.7 --balance_dist gaussian --balance_std 0.1
-                   --responsive_values 0.4,0.6,0.8 --responsive_type binomial
+    python main.py --balance_values 0.3,0.5,0.7 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4,0.6,0.8 --responsive_type binomial
+
+    python main.py --balance_values 0.3,0.5 --balance_dist gaussian --balance_std 0.5 --responsive_values 0.4,0.6 --responsive_type binomial
+
+    python main.py --balance_values 0.3 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4 --responsive_type binomial
 
     python main.py --balance_values 0.5 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed
 
@@ -128,18 +133,19 @@ for balance_value, responsive_val in itertools.product(balance_values, responsiv
     agentA.plot_trajectory(t_end=120)
     ratinabox.stylize_plots()
 
+
+    ###PLOTTING
+    '''
     agentA.plot_position_heatmap()
     agentA.plot_histogram_of_speeds()
-
     combined_neuronsA.plot_rate_timeseries()
     combined_neuronsA.plot_rate_map()
     combined_neuronsA.plot_place_cell_centres()
-
-
-    filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
-    filename_envB = f"response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
+    '''
 
     # Construct the full file paths
+    filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
+    filename_envB = f"response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
     full_path_envA = os.path.join(save_directory, filename_envA)
     full_path_envB = os.path.join(save_directory, filename_envB)
 

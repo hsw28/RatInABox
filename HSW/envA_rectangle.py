@@ -31,8 +31,10 @@ def simulate_envA(position_data, balance_distribution, responsive_distribution):
     # Import trajectory into the agent
     agent.import_trajectory(times=unique_times, positions=unique_positions)
 
+
     # Create CombinedPlaceTebcNeurons with the environment
     combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution)
+    combined_neurons.calculate_smoothed_velocity(position_data)
 
     # Initialize last CS and US times
     last_CS_time = None
@@ -60,8 +62,11 @@ def simulate_envA(position_data, balance_distribution, responsive_distribution):
         time_since_CS = times[index] - last_CS_time if last_CS_time is not None else -1
         time_since_US = times[index] - last_US_time if last_US_time is not None else -1
 
+        # Retrieve the agent's current position from the history
+        agent_position = agent.history['pos'][index]
+
         # Update neuron states
-        combined_neurons.update_state(agent.update(), time_since_CS, time_since_US)
+        combined_neurons.update_state(agent_position, time_since_CS, time_since_US, index)
 
         # Store firing rates
         firing_rates[:, index] = combined_neurons.get_firing_rates()

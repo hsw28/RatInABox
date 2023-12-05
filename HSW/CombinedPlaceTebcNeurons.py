@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from ratinabox.Neurons import Neurons, PlaceCells
 from tebc_response import response_profiles
 
@@ -61,18 +62,40 @@ class CombinedPlaceTebcNeurons(PlaceCells):
         cell_types = np.random.choice(range(1, 9), size=self.num_neurons, p=cell_type_probs)
         return responsive_neurons, cell_types
 
-    def update_state(self, agent_position, time_since_CS, time_since_US):
+    def calculate_smoothed_velocity(self, position_data):
+        times = position_data[0, :]   # Timestamps
+        xpos = position_data[1, :]    # X positions
+        ypos = position_data[2, :]    # Y positions
+
+        vel_vector = []
+        s = len(times)
+
+        for i in range(1, s - 1):
+            if times[i] != times[i - 1]:
+                hypo = np.hypot(xpos[i - 1] - xpos[i + 1], ypos[i - 1] - ypos[i + 1])
+                vel = hypo / (times[i + 1] - times[i - 1])
+                vel_vector.append(vel)
+
+        # Smooth the velocity data
+        window_size = 15
+        self.smoothed_velocity = pd.Series(vel_vector).rolling(window=window_size, min_periods=1, center=True).mean().tolist()
+
+
+    def update_state(self, agent_position, time_since_CS, time_since_US, current_index):
+        # Check the current smoothed velocity
+        current_velocity = self.smoothed_velocity[current_index] if current_index < len(self.smoothed_velocity) else 0
+
         self.agent.position = agent_position
         self.update()  # This updates the PlaceCells part of this class
 
         for i in range(self.num_neurons):
-            # Check if the history for each neuron is populated
-            if len(self.history['firingrate']) > i and len(self.history['firingrate'][i]) > 0:
-                place_response = self.history['firingrate'][i][-1]
-            else:
-                place_response = 0  # default value if history not populated
-
+            place_response = 0  # Default value if velocity is below threshold or history not populated
             tebc_response = 0
+
+            if current_velocity > 0.02:  # Velocity threshold is 2 cm/s
+                if len(self.history['firingrate']) > i and len(self.history['firingrate'][i]) > 0:
+                    place_response = self.history['firingrate'][i][-1]
+
             if self.tebc_responsive_neurons[i]:
                 cell_type = self.cell_types[i]
                 response_func = response_profiles[cell_type]['response_func']
