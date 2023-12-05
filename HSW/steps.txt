@@ -24,6 +24,7 @@ STEPS
           - class that combines tEBC and place cell data into one cell type
           - adjust the BALANCE PARAMETER to adjust how much each cell incorporates spatial vs tEBC data
           - adjust tebc_responsive_rate that specifies the percentage of neurons that are responsive to tEBC signals.
+          - does baseline rate and not place cells as defined in tebc_response if velocoty <2cm/s
     •	trial_marker.py
           - Function to Determine CS/US Presentation ()
 

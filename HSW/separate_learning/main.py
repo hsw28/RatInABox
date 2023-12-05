@@ -156,7 +156,6 @@ for balance_value, responsive_val in itertools.product(balance_values, responsiv
     # Print confirmation
     print(f"Saved results to {full_path_envA} and {full_path_envB}")
 
-
     # Assess learning transfer and other metrics
     #similarity_score = assess_learning_transfer(response_envA, response_envB, balance_value, responsive_val)
     #print(f"Balance: {balance_value}, Responsive Rate: {responsive_val}, Learning Transfer: {similarity_score}")

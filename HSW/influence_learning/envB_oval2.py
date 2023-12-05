@@ -1,0 +1,74 @@
+import numpy as np
+from ratinabox.Environment import Environment
+from ratinabox.Agent import Agent
+from CombinedPlaceTebcNeurons2 import CombinedPlaceTebcNeurons
+from trial_marker2 import determine_cs_us
+
+
+#modeling environment B (oval)
+#using equation from https://www.biorxiv.org/content/10.1101/2023.10.08.561112v1.full :
+'''
+Place and grid cell rate maps were generated from a real exploration trajectory using
+the open source Python software RatInABox. The respective activity rates are then used
+to train a logistic regressor to predict the real activity of each individual neurons.
+To evaluate each model performance, we computed a F1 score for each neuron using
+a place input model, which penalizes both incorrect classifications of active and inactive periods.
+'''
+
+#allows me to upload my own trajectory <-- I HAVE TO SCALE THIS
+# Similar to EnvA, but with adjustments for EnvB dimensions and trajectory data
+
+
+
+def simulate_envB(agent, position_data, balance_distribution, responsive_distribution):
+    N = 80
+    firing_rates = np.zeros((N, position_data.shape[1]))
+
+    # Import trajectory into the agent
+    times = position_data[0]
+    positions = position_data[1:3].T
+    unique_times, indices = np.unique(times, return_index=True)
+    unique_positions = positions[indices]
+    agent.import_trajectory(times=unique_times, positions=unique_positions)
+
+    # Initialize place cells for EnvB
+    place_cells_params_envB = {
+        "n": N,
+        # Other parameters adjusted for EnvB
+    }
+    combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution, place_cells_params_envB)
+
+    # Simulation loop
+    for index in range(unique_positions.shape[0]):
+        # Current timestamp
+        current_time = unique_times[index]
+
+        # Update the agent
+        agent.update()
+
+        # Determine if CS or US is present
+        trial_marker = position_data[3, index]
+        cs_present, us_present = determine_cs_us(trial_marker)
+
+        # Update last CS/US time if necessary
+        if cs_present and (last_CS_time is None or times[index] > last_CS_time):
+            last_CS_time = times[index]
+        if us_present and (last_US_time is None or times[index] > last_US_time):
+            last_US_time = times[index]
+
+        # Calculate time since CS and US
+        time_since_CS = times[index] - last_CS_time if last_CS_time is not None else -1
+        time_since_US = times[index] - last_US_time if last_US_time is not None else -1
+
+        # Retrieve the agent's current position from the history
+        agent_position = agent.history['pos'][index]
+
+        # Update neuron states
+        combined_neurons.update_state(agent_position, time_since_CS, time_since_US, index)
+
+        # Store firing rates
+        firing_rates[:, index] = combined_neurons.get_firing_rates()
+
+
+    # Return the firing rates for further analysis
+    return firing_rates, agent, combined_neurons
