@@ -79,17 +79,17 @@ class Agent:
         Args:
             params (dict, optional). Defaults to {}.
         """
-       
+
         self.params = copy.deepcopy(__class__.default_params)
         self.params.update(params)
 
         utils.update_class_params(self, self.params, get_all_defaults=True)
         utils.check_params(self, params.keys())
 
-        
+
         self.Environment = Environment
 
-        # decide the name of the agent 
+        # decide the name of the agent
         self.agent_idx = len(self.Environment.Agents)
 
         if self.name is None:
@@ -135,9 +135,9 @@ class Agent:
                     warnings.warn(
                         "Warning: You have solid 1D boundary conditions and non-zero speed mean."
                     )
-        
+
         # normally this will just be a low pass filter over the velocity vector
-        # this is done to smooth out head turning and make it more realistic 
+        # this is done to smooth out head turning and make it more realistic
         # (potentially stablize behaviours associated with head direction)
         self.head_direction = self.velocity / np.linalg.norm(self.velocity)
 
@@ -439,7 +439,7 @@ class Agent:
                 )
 
         self.update_head_direction(dt=dt)
-        
+
         if len(self.history["pos"]) >= 1:
             self.distance_travelled += np.linalg.norm(
                 self.Environment.get_vectors_between___accounting_for_environment(
@@ -463,7 +463,7 @@ class Agent:
         """
         This function updates the head direction of the agent. #
 
-        Args: 
+        Args:
             dt: the time step (float)
 
         The head direction is updated by a low pass filter of the the current velocity vector.
@@ -477,14 +477,14 @@ class Agent:
 
             if self.head_direction is None:
                 self.head_direction = self.velocity
-            
-            if tau_head_direction <= dt: 
+
+            if tau_head_direction <= dt:
                 self.head_direction = immediate_head_direction
                 return
-            
+
             if dt > tau_head_direction:
                 warnings.warn("dt > head_direction_smoothing_timescale. This will break the head direction smoothing.")
-     
+
             self.head_direction = self.head_direction * ( 1 - dt / tau_head_direction ) + dt / tau_head_direction * immediate_head_direction
 
             # normalize the head direction
@@ -496,7 +496,7 @@ class Agent:
         self.history["vel"].append(list(self.save_velocity))
         self.history["head_direction"].append(list(self.head_direction))
         if self.Environment.dimensionality == "2D":
-            self.history["rot_vel"].append(self.rotational_velocity)     
+            self.history["rot_vel"].append(self.rotational_velocity)
         return
 
     def reset_history(self):
@@ -725,7 +725,7 @@ class Agent:
                     s = point_size * np.exp((time - time[-1]) / decay_point_timescale)
                     s[(time[-1] - time) > (1.5 * decay_point_timescale)] *= 0
 
-                #plot trajectory 
+                #plot trajectory
                 trajectory_ = ax.scatter(
                     trajectory[:-1, 0],
                     trajectory[:-1, 1],
@@ -747,7 +747,7 @@ class Agent:
                     marker="o",
                 )
 
-                #plot head direction 
+                #plot head direction
                 if plot_head_direction == True:
                     rotated_agent_marker = matplotlib.markers.MarkerStyle(marker=[(-1,0),(1,0),(0,4)]) # a triangle
                     rotated_agent_marker._transform = rotated_agent_marker.get_transform().rotate_deg(-ratinabox.utils.get_bearing(head_direction[-1])*180/np.pi)
@@ -762,7 +762,7 @@ class Agent:
                         marker=rotated_agent_marker,
                     )
 
-                if colorbar == True and color == "changing": 
+                if colorbar == True and color == "changing":
                     #add colorbar to the ax
                     from mpl_toolkits.axes_grid1 import make_axes_locatable
                     divider = make_axes_locatable(ax)
@@ -774,7 +774,7 @@ class Agent:
                     cbar.set_ticklabels([round(t_start / 60, 2), round(t_end / 60, 2)])
                     cbar.outline.set_visible(False)
                     cbar.ax.tick_params(length=0)
-                    
+
 
             if self_.Environment.dimensionality == "1D":
                 if fig is None and ax is None:
