@@ -473,7 +473,10 @@ class Agent:
 
         elif self.Environment.dimensionality == "2D":
             tau_head_direction = self.head_direction_smoothing_timescale
-            immediate_head_direction = self.velocity / np.linalg.norm(self.velocity)
+            if np.linalg.norm(self.velocity) != 0:
+                immediate_head_direction = self.velocity / np.linalg.norm(self.velocity)
+            else:
+                immediate_head_direction = self.velocity
 
             if self.head_direction is None:
                 self.head_direction = self.velocity

@@ -98,3 +98,15 @@ class CombinedPlaceTebcNeurons(PlaceCells):
     def get_firing_rates(self):
         # Return the current firing rates of all neurons
         return self.firing_rates
+
+    def plot_rate_timeseries(self):
+        # This method acts as a wrapper to the parent class's plot_ratemap method
+        super(CombinedPlaceTebcNeurons, self).plot_rate_timeseries()
+
+    def plot_rate_map(self):
+        # This method acts as a wrapper to the parent class's plot_ratemap method
+        super(CombinedPlaceTebcNeurons, self).plot_rate_map()
+
+    def plot_place_cell_centre(self):
+        # This method acts as a wrapper to the parent class's plot_ratemap method
+        super(CombinedPlaceTebcNeurons, self).plot_place_cell_centre()
