@@ -19,10 +19,9 @@ combined_neurons = CombinedPlaceTebcNeurons(num_neurons, place_cells, balance, t
 '''
 
 
-
 class CombinedPlaceTebcNeurons(PlaceCells):
     default_params = dict()  # Add this line to define the default_params attribute
-    def __init__(self, agent, N, balance_distribution, responsive_distribution, place_cells_params):
+    def __init__(self, agent, N, balance_distribution, responsive_distribution, place_cells_params, tebc_responsive_neurons=None, cell_types=None):
         super().__init__(agent, place_cells_params)
 
         # Define parameters for PlaceCells
@@ -37,33 +36,26 @@ class CombinedPlaceTebcNeurons(PlaceCells):
             "save_history": True  # Save history for plotting
         }
 
-        # Initialize PlaceCells with parameters
-        super().__init__(agent, place_cells_params)
+        # Initialize tebc_responsive_neurons with a default value if not provided
+        if tebc_responsive_neurons is not None:
+            self.tebc_responsive_neurons = tebc_responsive_neurons
+        else:
+            self.tebc_responsive_neurons = np.full(N, False)  # Default value: all False
 
         # Initialize additional properties for CombinedPlaceTebcNeurons
+
+        if cell_types is not None:
+            self.cell_types = cell_types
+        else:
+            self.cell_types = np.full(N, False)  # Default value: all False
+
         self.agent = agent
         self.num_neurons = N
         self.balance_distribution = balance_distribution
         self.responsive_distribution = responsive_distribution
-        self.tebc_responsive_neurons, self.cell_types = self.assign_tebc_responsiveness_and_types()
         self.firing_rates = np.zeros(N)
         self.history = {'t': [], 'firingrate': [], 'spikes': []}
 
-
-    def assign_tebc_responsiveness_and_types(self):
-        # Check if responsive_distribution is a single value or an array
-        if isinstance(self.responsive_distribution, (float, int)):
-            responsive_probs = np.full(self.num_neurons, self.responsive_distribution)
-        else:
-            responsive_probs = np.array(self.responsive_distribution)
-            if responsive_probs.ndim != 1 or len(responsive_probs) != self.num_neurons:
-                raise ValueError("responsive_distribution must be a 1D array of length num_neurons")
-        responsive_probs = np.clip(responsive_probs, 0, 1)
-        responsive_neurons = np.random.rand(self.num_neurons) < responsive_probs
-
-        cell_type_probs = [0.051, 0.032, 0.373, 0.155, 0.199, 0.050, 0.093, 0.047]
-        cell_types = np.random.choice(range(1, 9), size=self.num_neurons, p=cell_type_probs)
-        return responsive_neurons, cell_types
 
     def calculate_smoothed_velocity(self, position_data):
         times = position_data[0, :]   # Timestamps

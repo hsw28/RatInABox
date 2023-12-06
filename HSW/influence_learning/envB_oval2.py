@@ -19,9 +19,22 @@ a place input model, which penalizes both incorrect classifications of active an
 # Similar to EnvA, but with adjustments for EnvB dimensions and trajectory data
 
 
-def simulate_envB(agent, position_data, balance_distribution, responsive_distribution, tebc_responsive_neurons_envA):
+def simulate_envB(agent, position_data, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neuronsA, cell_types_envA):
+
+
     N = 80
-    firing_rates = np.zeros((N, position_data.shape[1]))
+
+    # Define place cell parameters for EnvA
+    place_cells_params_envB = {
+        "n": N,  # Number of place cells
+        "description": "gaussian",  # Adjust as needed for EnvA
+        "widths": 0.20,  # Adjust as needed for EnvA
+        "place_cell_centres": None,  # Adjust as needed for EnvA
+        "wall_geometry": "geodesic",  # Adjust as needed for EnvA
+        "min_fr": 0,  # Minimum firing rate
+        "max_fr": 1,  # Maximum firing rate
+        "save_history": True  # Save history for plotting
+    }
 
     # Import trajectory into the agent
     times = position_data[0]
@@ -30,17 +43,12 @@ def simulate_envB(agent, position_data, balance_distribution, responsive_distrib
     unique_positions = positions[indices]
     agent.import_trajectory(times=unique_times, positions=unique_positions)
 
-    # Initialize place cells for EnvB
-    place_cells_params_envB = {
-        "n": N,
-        # Other parameters adjusted for EnvB
-    }
-
-    combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution, place_cells_params_envB)
+    # Create CombinedPlaceTebcNeurons instance for EnvB
+    combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution_envA, tebc_responsive_rates_envA, place_cells_params_envB, tebc_responsive_neuronsA, cell_types_envA)
     combined_neurons.calculate_smoothed_velocity(position_data)
+    firing_rates = np.zeros((N, position_data.shape[1]))
 
-    # Use the tEBC responsive neurons from EnvA
-    combined_neurons.tebc_responsive_neurons = tebc_responsive_neurons_envA
+
 
     # Initialize last CS and US times
     last_CS_time = None

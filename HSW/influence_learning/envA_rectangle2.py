@@ -4,7 +4,7 @@ from ratinabox.Agent import Agent
 from CombinedPlaceTebcNeurons2 import CombinedPlaceTebcNeurons
 from trial_marker2 import determine_cs_us
 
-def simulate_envA(agent, position_data, balance_distribution, responsive_distribution):
+def simulate_envA(agent, position_data, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types):
     # Number of neurons
     N = 80
 
@@ -20,23 +20,23 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
         "save_history": True  # Save history for plotting
     }
 
-    # Create CombinedPlaceTebcNeurons instance for EnvA
-    combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution, place_cells_params_envA)
-
-    firing_rates = np.zeros((N, position_data.shape[1]))
-    combined_neurons.calculate_smoothed_velocity(position_data)
-
     # Import trajectory into the agent
     times = position_data[0]  # Timestamps
     positions = position_data[1:3].T  # Positions (x, y)
-    # Check for and handle duplicate timestamps
     unique_times, indices = np.unique(times, return_index=True)
     unique_positions = positions[indices]
     agent.import_trajectory(times=unique_times, positions=unique_positions)
 
+    # Create CombinedPlaceTebcNeurons instance for EnvA
+    combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution, place_cells_params_envA, tebc_responsive_neurons, cell_types)
+    firing_rates = np.zeros((N, position_data.shape[1]))
+    combined_neurons.calculate_smoothed_velocity(position_data)
+
+
     # Initialize last CS and US times
     last_CS_time = None
     last_US_time = None
+
 
     # Simulation loop
     for index in range(unique_positions.shape[0]):
@@ -70,4 +70,6 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
         firing_rates[:, index] = combined_neurons.get_firing_rates()
 
     # Return the firing rates for further analysis
+
+
     return firing_rates, agent, combined_neurons

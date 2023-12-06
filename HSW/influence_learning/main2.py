@@ -12,8 +12,11 @@ from learningTransfer2 import assess_learning_transfer
 from actualVexpected2 import compare_actual_expected_firing
 from ratinabox.Environment import Environment
 from ratinabox.Agent import Agent
+from assign_tebc_types_and_responsiveness import assign_tebc_types_and_responsiveness
 import os
 import ratinabox
+import matplotlib.pyplot as plt
+
 
 """
 Simulation Script for Neuronal Firing Rate Analysis
@@ -117,17 +120,30 @@ data = scipy.io.loadmat(matlab_file_path)
 position_data_envA = data['envA314_522']  # Adjust variable name as needed
 position_data_envB = data['envB314_524']  # Adjust variable name as needed
 
+positions = position_data_envA[1:3].T
+max_x = np.max(positions[:, 0])
+max_y = np.max(positions[:, 1])
+min_x = np.min(positions[:, 0])
+min_y = np.min(positions[:, 1])
+
 # Create environments for EnvA and EnvB
 envA_params = {
-    'boundary': [[0, 0], [0, .6], [1.3, .6], [1.3, 0]],
+    'boundary': [[min_x, min_y], [min_x, max_y], [max_x, max_y], [max_x, min_y]],
     'boundary_conditions': 'solid'
 }
 
 
 envA = Environment(params=envA_params)
 
+positions = position_data_envB[1:3].T
+max_x = np.max(positions[:, 0])
+max_y = np.max(positions[:, 1])
+min_x = np.min(positions[:, 0])
+min_y = np.min(positions[:, 1])
+
+
 envB_params = {
-    'boundary': [[0, 0], [0, .8], [.9, .8], [.9, 0]],
+    'boundary': [[min_x, min_y], [min_x, max_y], [max_x, max_y], [max_x, min_y]],
     'boundary_conditions': 'solid'
 }
 envB = Environment(params=envB_params)
@@ -136,6 +152,7 @@ envB = Environment(params=envB_params)
 num_neurons = 80
 balance_values = parse_list(args.balance_values) if args.balance_values else [0.5]
 responsive_values = parse_list(args.responsive_values) if args.responsive_values else [0.5]
+
 
 # Perform grid search over balance and responsive rates
 for balance_value, responsive_val in itertools.product(balance_values, responsive_values):
@@ -146,30 +163,36 @@ for balance_value, responsive_val in itertools.product(balance_values, responsiv
     agent = Agent(envA)
 
     # Simulate in Environment A
-    response_envA, agentA, combined_neuronsA = simulate_envA(agent, position_data_envA, balance_distribution, responsive_distribution)
+    tebc_responsive_neurons, cell_types = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
+    response_envA, agentA, combined_neuronsA = simulate_envA(agent, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)
 
-    # Save the tEBC responsive neurons state from EnvA
-    tebc_responsive_neurons_envA = combined_neuronsA.tebc_responsive_neurons
+    balance_distribution_envA = combined_neuronsA.balance_distribution
+    tebc_responsive_rates_envA = combined_neuronsA.tebc_responsive_neurons
 
     # Update the agent's environment to EnvB
-    #agent.environment = envB
     agent = Agent(envB)
 
-    # Simulate in Environment B using the updated CombinedPlaceTebcNeurons instance
-    response_envB, agentB, combined_neuronsB = simulate_envB(agent, position_data_envB, balance_distribution, responsive_distribution, tebc_responsive_neurons_envA)
-
-    ratinabox.autosave_plots = True
-    agentA.plot_trajectory(t_end=120)
-    ratinabox.stylize_plots()
+    # Simulate in Environment B using the parameters from Environment A
+    response_envB, agentB, combined_neuronsB = simulate_envB(agent, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, cell_types)
 
 
     ###PLOTTING
     '''
+    ratinabox.autosave_plots = True
+    ratinabox.stylize_plots()
+    plt.show()
+    agentA.plot_trajectory()
+    plt.show()
     agentA.plot_position_heatmap()
+    plt.show()
     agentA.plot_histogram_of_speeds()
+    plt.show()
     combined_neuronsA.plot_rate_timeseries()
+    plt.show()
     combined_neuronsA.plot_rate_map()
+    plt.show()
     combined_neuronsA.plot_place_cell_locations()
+    plt.show()
     '''
 
     # Construct the full file paths
