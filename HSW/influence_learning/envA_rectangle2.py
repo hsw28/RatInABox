@@ -4,22 +4,34 @@ from ratinabox.Agent import Agent
 from CombinedPlaceTebcNeurons2 import CombinedPlaceTebcNeurons
 from trial_marker2 import determine_cs_us
 
-def simulate_envA(agent, combined_neurons, position_data, balance_distribution, responsive_distribution):
+def simulate_envA(agent, position_data, balance_distribution, responsive_distribution):
     # Number of neurons
     N = 80
+
+    # Define place cell parameters for EnvA
+    place_cells_params_envA = {
+        "n": N,  # Number of place cells
+        "description": "gaussian",  # Adjust as needed for EnvA
+        "widths": 0.20,  # Adjust as needed for EnvA
+        "place_cell_centres": None,  # Adjust as needed for EnvA
+        "wall_geometry": "geodesic",  # Adjust as needed for EnvA
+        "min_fr": 0,  # Minimum firing rate
+        "max_fr": 1,  # Maximum firing rate
+        "save_history": True  # Save history for plotting
+    }
+
+    # Create CombinedPlaceTebcNeurons instance for EnvA
+    combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution, place_cells_params_envA)
+
     firing_rates = np.zeros((N, position_data.shape[1]))
     combined_neurons.calculate_smoothed_velocity(position_data)
-
 
     # Import trajectory into the agent
     times = position_data[0]  # Timestamps
     positions = position_data[1:3].T  # Positions (x, y)
-
     # Check for and handle duplicate timestamps
     unique_times, indices = np.unique(times, return_index=True)
     unique_positions = positions[indices]
-
-    # Import trajectory into the agent
     agent.import_trajectory(times=unique_times, positions=unique_positions)
 
     # Initialize last CS and US times

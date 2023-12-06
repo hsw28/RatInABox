@@ -19,9 +19,12 @@ combined_neurons = CombinedPlaceTebcNeurons(num_neurons, place_cells, balance, t
 '''
 
 
+
 class CombinedPlaceTebcNeurons(PlaceCells):
-    default_params = dict()
-    def __init__(self, agent, N, balance_distribution, responsive_distribution):
+    default_params = dict()  # Add this line to define the default_params attribute
+    def __init__(self, agent, N, balance_distribution, responsive_distribution, place_cells_params):
+        super().__init__(agent, place_cells_params)
+
         # Define parameters for PlaceCells
         place_cells_params = {
             "n": N,  # Number of place cells
@@ -139,6 +142,6 @@ class CombinedPlaceTebcNeurons(PlaceCells):
         # This method acts as a wrapper to the parent class's plot_ratemap method
         super(CombinedPlaceTebcNeurons, self).plot_rate_map()
 
-    def plot_place_cell_centre(self):
+    def plot_place_cell_locations(self):
         # This method acts as a wrapper to the parent class's plot_ratemap method
-        super(CombinedPlaceTebcNeurons, self).plot_place_cell_centre()
+        super(CombinedPlaceTebcNeurons, self).plot_place_cell_locations()

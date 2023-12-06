@@ -140,7 +140,7 @@ for balance_value, responsive_val in itertools.product(balance_values, responsiv
     agentA.plot_histogram_of_speeds()
     combined_neuronsA.plot_rate_timeseries()
     combined_neuronsA.plot_rate_map()
-    combined_neuronsA.plot_place_cell_centres()
+    combined_neuronsA.plot_place_cell_locations()
     '''
 
     # Construct the full file paths

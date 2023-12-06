@@ -19,8 +19,7 @@ a place input model, which penalizes both incorrect classifications of active an
 # Similar to EnvA, but with adjustments for EnvB dimensions and trajectory data
 
 
-
-def simulate_envB(agent, position_data, balance_distribution, responsive_distribution):
+def simulate_envB(agent, position_data, balance_distribution, responsive_distribution, tebc_responsive_neurons_envA):
     N = 80
     firing_rates = np.zeros((N, position_data.shape[1]))
 
@@ -36,7 +35,17 @@ def simulate_envB(agent, position_data, balance_distribution, responsive_distrib
         "n": N,
         # Other parameters adjusted for EnvB
     }
+
     combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution, place_cells_params_envB)
+    combined_neurons.calculate_smoothed_velocity(position_data)
+
+    # Use the tEBC responsive neurons from EnvA
+    combined_neurons.tebc_responsive_neurons = tebc_responsive_neurons_envA
+
+    # Initialize last CS and US times
+    last_CS_time = None
+    last_US_time = None
+
 
     # Simulation loop
     for index in range(unique_positions.shape[0]):

@@ -130,6 +130,6 @@ class CombinedPlaceTebcNeurons(PlaceCells):
         # This method acts as a wrapper to the parent class's plot_ratemap method
         super(CombinedPlaceTebcNeurons, self).plot_rate_map()
 
-    def plot_place_cell_centre(self):
+    def plot_place_cell_locations(self):
         # This method acts as a wrapper to the parent class's plot_ratemap method
-        super(CombinedPlaceTebcNeurons, self).plot_place_cell_centre()
+        super(CombinedPlaceTebcNeurons, self).plot_place_cell_locations()

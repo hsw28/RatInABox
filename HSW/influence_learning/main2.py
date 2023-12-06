@@ -122,6 +122,8 @@ envA_params = {
     'boundary': [[0, 0], [0, .6], [1.3, .6], [1.3, 0]],
     'boundary_conditions': 'solid'
 }
+
+
 envA = Environment(params=envA_params)
 
 envB_params = {
@@ -143,25 +145,18 @@ for balance_value, responsive_val in itertools.product(balance_values, responsiv
     # Create an agent initially in EnvA
     agent = Agent(envA)
 
-    # Create CombinedPlaceTebcNeurons with the initial environment
-    combined_neurons = CombinedPlaceTebcNeurons(agent, num_neurons, balance_distribution, responsive_distribution)
-
     # Simulate in Environment A
-    response_envA, agentA, combined_neuronsA = simulate_envA(agent, combined_neurons, position_data_envA, balance_distribution, responsive_distribution)
-    tebc_responsive_neurons_envA = combined_neurons.tebc_responsive_neurons
+    response_envA, agentA, combined_neuronsA = simulate_envA(agent, position_data_envA, balance_distribution, responsive_distribution)
+
+    # Save the tEBC responsive neurons state from EnvA
+    tebc_responsive_neurons_envA = combined_neuronsA.tebc_responsive_neurons
 
     # Update the agent's environment to EnvB
-    agent.environment = envB
-
-    # Reset or update the place cells for Environment B
-    combined_neurons.reset_place_cells(new_envB_params)
-
-    # Update the tEBC response (decide whether to retain or reset)
-    combined_neurons.update_tebc_response(retain_tebc_response=False)
+    #agent.environment = envB
+    agent = Agent(envB)
 
     # Simulate in Environment B using the updated CombinedPlaceTebcNeurons instance
-    response_envB, agentB, combined_neuronsB = simulate_envB(agent, combined_neurons, position_data_envB, balance_distribution, responsive_distribution)
-
+    response_envB, agentB, combined_neuronsB = simulate_envB(agent, position_data_envB, balance_distribution, responsive_distribution, tebc_responsive_neurons_envA)
 
     ratinabox.autosave_plots = True
     agentA.plot_trajectory(t_end=120)
@@ -174,7 +169,7 @@ for balance_value, responsive_val in itertools.product(balance_values, responsiv
     agentA.plot_histogram_of_speeds()
     combined_neuronsA.plot_rate_timeseries()
     combined_neuronsA.plot_rate_map()
-    combined_neuronsA.plot_place_cell_centres()
+    combined_neuronsA.plot_place_cell_locations()
     '''
 
     # Construct the full file paths
