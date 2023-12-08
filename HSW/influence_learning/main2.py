@@ -16,6 +16,11 @@ from assign_tebc_types_and_responsiveness import assign_tebc_types_and_responsiv
 import os
 import ratinabox
 import matplotlib.pyplot as plt
+import sys
+sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
+from cond_decoding_AvsB import cond_decoding_AvsB
+from cebra import CEBRA
+
 
 
 """
@@ -58,13 +63,18 @@ Arguments:
                         Default is 'fixed'.
 
 Examples:
-    python main.py --balance_values 0.3,0.5,0.7 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4,0.6,0.8 --responsive_type binomial
+    python main2.py --balance_values 0.3,0.5,0.7 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4,0.6,0.8 --responsive_type binomial
 
-    python main.py --balance_values 0.3,0.5 --balance_dist gaussian --balance_std 0.5 --responsive_values 0.4,0.6 --responsive_type binomial
+    python main2.py --balance_values 0.3,0.5 --balance_dist gaussian --balance_std 0.5 --responsive_values 0.4,0.6 --responsive_type binomial
 
-    python main.py --balance_values 0.3 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4 --responsive_type binomial
+    python main2.py --balance_values 0.3 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4 --responsive_type binomial
 
-    python main.py --balance_values 0.5 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed
+    python main2.py --balance_values 0.5 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed
+
+    python main2.py --balance_values 0.5,0.7 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed
+
+    python main2.py --balance_values 0,.2,.6,.8,1 --balance_dist fixed --responsive_values 0,.2,.6,.8,1 --responsive_type fixed
+
 
 Description:
     The script conducts simulations to evaluate how different configurations of balance factors and responsive rates affect neuronal firing patterns. Balance can be set as a fixed value or as a mean for a Gaussian distribution. The responsive rate determines the proportion of neurons responsive to tEBC signals and can be set as a fixed value or sampled from specified distributions.
@@ -82,6 +92,27 @@ ratinabox.figure_directory = '/Users/Hannah/Programming/data_eyeblink/rat314/rat
 # Create the directory if it doesn't exist
 os.makedirs(save_directory, exist_ok=True)
 
+#naming our file
+parser = argparse.ArgumentParser()
+parser.add_argument('--balance_values', type=str, required=True)
+parser.add_argument('--balance_dist', type=str, required=True)
+parser.add_argument('--balance_std', type=float, required=False)
+parser.add_argument('--responsive_values', type=str, required=True)
+parser.add_argument('--responsive_type', type=str, required=True)
+# Parse the arguments
+args = parser.parse_args()
+# Function to process the list-like arguments
+def process_list_arg(arg):
+    return ','.join(arg.split(','))
+# Process the balance_values and responsive_values
+balance_values_str = process_list_arg(args.balance_values)
+responsive_values_str = process_list_arg(args.responsive_values)
+# Construct the filename
+results_filename = f"grid_search_results-balance-{balance_values_str}-{args.balance_dist}-std-{args.balance_std}-response-{responsive_values_str}-{args.responsive_type}.txt"
+results_filepath = os.path.join(save_directory, results_filename)
+
+
+
 def parse_list(arg_value):
     if isinstance(arg_value, list):
         return [float(item) for item in arg_value]
@@ -97,6 +128,7 @@ parser.add_argument('--balance_std', type=float, default=0.1, help='Standard dev
 parser.add_argument('--responsive_values', type=parse_list, help='List of responsive rates or probabilities for distributions')
 parser.add_argument('--responsive_type', choices=['fixed', 'binomial', 'normal', 'poisson'], default='fixed', help='Type of distribution for responsive rate')
 args = parser.parse_args()
+
 
 def get_distribution_values(dist_type, params, size):
     if dist_type == 'fixed':
@@ -133,6 +165,7 @@ envA_params = {
 }
 
 
+
 envA = Environment(params=envA_params)
 
 positions = position_data_envB[1:3].T
@@ -155,60 +188,91 @@ responsive_values = parse_list(args.responsive_values) if args.responsive_values
 
 
 # Perform grid search over balance and responsive rates
-for balance_value, responsive_val in itertools.product(balance_values, responsive_values):
-    balance_distribution = get_distribution_values(args.balance_dist, [balance_value, args.balance_std], num_neurons)
-    responsive_distribution = get_distribution_values(args.responsive_type, [responsive_val], num_neurons)
+with open(results_filepath, "w") as results_file:
+    for balance_value, responsive_val in itertools.product(balance_values, responsive_values):
+        print(balance_value)
+        print(responsive_val)
+        balance_distribution = get_distribution_values(args.balance_dist, [balance_value, args.balance_std], num_neurons)
+        responsive_distribution = get_distribution_values(args.responsive_type, [responsive_val], num_neurons)
 
-    # Create an agent initially in EnvA
-    agent = Agent(envA)
+        # Create an agent initially in EnvA
+        agent = Agent(envA)
 
-    # Simulate in Environment A
-    tebc_responsive_neurons, cell_types = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
-    response_envA, agentA, combined_neuronsA = simulate_envA(agent, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)
+        # Simulate in Environment A
+        tebc_responsive_neurons, cell_types = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
+        response_envA, agentA, combined_neuronsA = simulate_envA(agent, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)
 
-    balance_distribution_envA = combined_neuronsA.balance_distribution
-    tebc_responsive_rates_envA = combined_neuronsA.tebc_responsive_neurons
+        balance_distribution_envA = combined_neuronsA.balance_distribution
+        tebc_responsive_rates_envA = combined_neuronsA.tebc_responsive_neurons
 
-    # Update the agent's environment to EnvB
-    agent = Agent(envB)
+        # Update the agent's environment to EnvB
+        agent = Agent(envB)
 
-    # Simulate in Environment B using the parameters from Environment A
-    response_envB, agentB, combined_neuronsB = simulate_envB(agent, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, cell_types)
+        # Simulate in Environment B using the parameters from Environment A
+        response_envB, agentB, combined_neuronsB = simulate_envB(agent, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, cell_types)
 
 
-    ###PLOTTING
-    '''
-    ratinabox.autosave_plots = True
-    ratinabox.stylize_plots()
-    plt.show()
-    agentA.plot_trajectory()
-    plt.show()
-    agentA.plot_position_heatmap()
-    plt.show()
-    agentA.plot_histogram_of_speeds()
-    plt.show()
-    combined_neuronsA.plot_rate_timeseries()
-    plt.show()
-    combined_neuronsA.plot_rate_map()
-    plt.show()
-    combined_neuronsA.plot_place_cell_locations()
-    plt.show()
-    '''
-
-    # Construct the full file paths
-    filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
-    filename_envB = f"response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
-    full_path_envA = os.path.join(save_directory, filename_envA)
-    full_path_envB = os.path.join(save_directory, filename_envB)
-    # Save the response arrays to files
-    np.save(full_path_envA, response_envA)
-    np.save(full_path_envB, response_envB)
-
-    # Print confirmation
-    print(f"Saved results to {full_path_envA} and {full_path_envB}")
+        ###PLOTTING
+        '''
+        ratinabox.autosave_plots = True
+        ratinabox.stylize_plots()
+        plt.show()
+        agentA.plot_trajectory()
+        plt.show()
+        agentA.plot_position_heatmap()
+        plt.show()
+        agentA.plot_histogram_of_speeds()
+        plt.show()
+        combined_neuronsA.plot_rate_timeseries()
+        plt.show()
+        combined_neuronsA.plot_rate_map()
+        plt.show()
+        combined_neuronsA.plot_place_cell_locations()
+        plt.show()
+        '''
 
 
 
-    # Assess learning transfer and other metrics
-    #similarity_score = assess_learning_transfer(response_envA, response_envB, balance_value, responsive_val)
-    #print(f"Balance: {balance_value}, Responsive Rate: {responsive_val}, Learning Transfer: {similarity_score}")
+        #####save
+        # Construct the full file paths
+        filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
+        filename_envB = f"response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
+        full_path_envA = os.path.join(save_directory, filename_envA)
+        full_path_envB = os.path.join(save_directory, filename_envB)
+        # Save the response arrays to files
+        np.save(full_path_envA, response_envA)
+        np.save(full_path_envB, response_envB)
+        ######
+
+        # Assess learning transfer and other metrics
+        #organize to run in cebra
+        response_envA = np.transpose(response_envA)
+        response_envB = np.transpose(response_envB)
+
+
+        envA_eyeblink = position_data_envA[3].T
+        response_envA = response_envA[envA_eyeblink > 0,:]
+        envA_eyeblink = envA_eyeblink[envA_eyeblink > 0]
+        envA_eyeblink = np.where(envA_eyeblink <= 5, 1, 2)
+
+        envB_eyeblink = position_data_envB[3].T
+        response_envB = response_envB[envB_eyeblink > 0,:]
+        envB_eyeblink = envB_eyeblink[envB_eyeblink > 0]
+        envB_eyeblink = np.where(envB_eyeblink <= 5, 1, 2)
+
+
+        #run cebra decoding
+        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA, envA_eyeblink, response_envB, envB_eyeblink)
+
+        # Construct the identifier for this iteration
+        identifier = f"{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}"
+
+        # Append the results to the file
+        results_file.write(f"Parameters: {identifier}\n")
+        results_file.write(f"fract_control_all: {fract_control_all}\n")
+        results_file.write(f"fract_test_all: {fract_test_all}\n")
+        results_file.write("\n")  # Add a newline for readability
+
+
+        # Print confirmation
+        print(f"Saved results to {full_path_envA} and {full_path_envB}")

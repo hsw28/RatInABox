@@ -1,47 +1,41 @@
 import numpy as np
 
-#cell type responses based on manuscript Sequence of Single Neuron Changes in CA1 Hippocampus of Rabbits During Acquisition of Trace Eyeblink Conditioned Responses
+# Adjusted response functions considering 10 ms bins
 
+def gaussian_peak(time, magnitude, peak_time, sd):
+    return magnitude * np.exp(-((time - peak_time) ** 2) / (2 * sd ** 2))
 
-def gaussian_response(time, peak_per_trial, start, end, peak_time, baseline):
-    # Standard deviation is set to span 1/6th of the response window, assuming a normal distribution
-    sd = (end - start) / 6
+def bimodal_response(time, magnitudes, peak_times, sds, baseline):
+    peak1 = gaussian_peak(time, magnitudes[0], peak_times[0], sds[0])
+    peak2 = gaussian_peak(time, magnitudes[1], peak_times[1], sds[1])
+    return peak1 + peak2 + baseline
+
+def linear_response(time, start, end, start_value, end_value):
     if start <= time <= end:
-        return peak_per_trial * np.exp(-((time - peak_time)**2) / (2 * sd**2)) + baseline
+        slope = (end_value - start_value) / (end - start)
+        return slope * (time - start) + start_value
+    else:
+        return start_value if time < start else end_value
+
+def uniform_response(time, baseline):
     return baseline
 
-def fluctuating_response(time, start, end, baseline, fluctuation_strength, fluctuation_frequency):
-    if start <= time <= end:
-        fluctuation = fluctuation_strength * np.sin(time / fluctuation_frequency)
-        return baseline + fluctuation
-    return baseline
-
-def bimodal_response(time, peaks_per_trial, start, end, peak_times, baseline):
-    sd1 = (peak_times[0] - start) / 3
-    sd2 = (end - peak_times[1]) / 3
-    if start <= time <= end:
-        return peaks_per_trial[0] * np.exp(-((time - peak_times[0])**2) / (2 * sd1**2)) + \
-               peaks_per_trial[1] * np.exp(-((time - peak_times[1])**2) / (2 * sd2**2)) + baseline
-    return baseline
-
-def uniform_response(time, start, end, baseline, response_level):
-    if start <= time <= end:
-        return response_level + baseline
-    return baseline
-
-def low_level_response(time, start, end, baseline):
-    if start <= time <= end:
-        return baseline
-    return baseline
-
-# Define the response profiles for each cell type based on the histogram data
+# Define the response profiles for each cell type with estimated baselines and adjusted times
 response_profiles = {
-    1: {'response_func': lambda t: gaussian_response(t, peak_per_trial=0.005, start=-50, end=300, peak_time=50, baseline=0.005)},
-    2: {'response_func': lambda t: gaussian_response(t, peak_per_trial=0.0025, start=-50, end=150, peak_time=50, baseline=0.005)},
-    3: {'response_func': lambda t: fluctuating_response(t, start=-100, end=900, baseline=0.03, fluctuation_strength=0.001, fluctuation_frequency=50)},
-    4: {'response_func': lambda t: bimodal_response(t, peaks_per_trial=[0.001, 0.00075], start=-50, end=450, peak_times=[-25, 200], baseline=0.025)},
-    5: {'response_func': lambda t: gaussian_response(t, peak_per_trial=0.00125, start=0, end=150, peak_time=50, baseline=0.005)},
-    6: {'response_func': lambda t: uniform_response(t, start=-100, end=900, baseline=0.018, response_level=0.002)},
-    7: {'response_func': lambda t: gaussian_response(t, peak_per_trial=0.001, start=-50, end=350, peak_time=100, baseline=0.01)},
-    8: {'response_func': lambda t: low_level_response(t, start=-100, end=900, baseline=0.015)},
+    # Bimodal response, lower first peak and higher second peak
+    1: {'response_func': lambda t: bimodal_response(t, magnitudes=[0.15, 0.4], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=0.1)},
+    # Single peak with fast rise and slow fall
+    2: {'response_func': lambda t: gaussian_peak(t, magnitude=0.25, peak_time=0.6, sd=0.15) + 0.05},
+    # Sharp decrease from baseline
+    3: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=0.25, end_value=0) + 0.25},
+    # Slow decrease, quick rise, and slow fall
+    4: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=0.2, end_value=0.05) + 0.2},
+    # Sharp increase and linear descent
+    5: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=0.1, end_value=0.3) + 0.1},
+    # Uniform response close to baseline
+    6: {'response_func': lambda t: uniform_response(t, baseline=0.15)},
+    # Similar to type 1 but with less pronounced peaks
+    7: {'response_func': lambda t: bimodal_response(t, magnitudes=[0.1, 0.25], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=0.1)},
+    # Gradual decrease from baseline
+    8: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=0.1, end_value=0) + 0.1}
 }
