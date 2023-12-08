@@ -237,6 +237,8 @@ with open(results_filepath, "w") as results_file:
         plt.show()
         agentA.plot_histogram_of_speeds()
         plt.show()
+        agentB.plot_histogram_of_speeds()
+        plt.show()
         combined_neuronsA.plot_rate_timeseries()
         plt.show()
         combined_neuronsA.plot_rate_map()

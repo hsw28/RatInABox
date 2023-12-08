@@ -86,6 +86,8 @@ class CombinedPlaceTebcNeurons(PlaceCells):
         for i in range(self.num_neurons):
             #place_response = response_profiles[self.cell_types[i]]['baseline']*self.balance_distribution[i] if current_velocity < 0.02 else 0
 
+            last_firing_rate = self.history['firingrate'][i][-1] if len(self.history['firingrate']) > i and len(self.history['firingrate'][i]) > 0 else 0
+
             place_response = 0
             tebc_response = 0
 
@@ -97,7 +99,7 @@ class CombinedPlaceTebcNeurons(PlaceCells):
             if self.tebc_responsive_neurons[i]:
                 cell_type = self.cell_types[i]
                 response_func = response_profiles[cell_type]['response_func']
-                tebc_response = response_func(time_since_CS)
+                tebc_response = response_func(time_since_CS, last_firing_rate)
 
             # Retrieve firing rates from Agent.history
             self.firing_rates[i] = (1 - self.balance_distribution[i]) * place_response + self.balance_distribution[i] * tebc_response
