@@ -1,6 +1,6 @@
 import numpy as np
 
-# Adjusted response functions considering 10 ms bins
+# response functions for neuront types from "Hippocampal Encoding of Non-Spatial Trace Conditioning"
 
 def gaussian_peak(time, magnitude, peak_time, sd):
     return magnitude * np.exp(-((time - peak_time) ** 2) / (2 * sd ** 2))
@@ -22,20 +22,12 @@ def uniform_response(time, baseline):
 
 # Define the response profiles for each cell type with estimated baselines and adjusted times
 response_profiles = {
-    # Bimodal response, lower first peak and higher second peak
-    1: {'response_func': lambda t: bimodal_response(t, magnitudes=[0.15, 0.4], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=0.1)},
-    # Single peak with fast rise and slow fall
-    2: {'response_func': lambda t: gaussian_peak(t, magnitude=0.25, peak_time=0.6, sd=0.15) + 0.05},
-    # Sharp decrease from baseline
-    3: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=0.25, end_value=0) + 0.25},
-    # Slow decrease, quick rise, and slow fall
-    4: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=0.2, end_value=0.05) + 0.2},
-    # Sharp increase and linear descent
-    5: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=0.1, end_value=0.3) + 0.1},
-    # Uniform response close to baseline
-    6: {'response_func': lambda t: uniform_response(t, baseline=0.15)},
-    # Similar to type 1 but with less pronounced peaks
-    7: {'response_func': lambda t: bimodal_response(t, magnitudes=[0.1, 0.25], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=0.1)},
-    # Gradual decrease from baseline
-    8: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=0.1, end_value=0) + 0.1}
+    1: {'response_func': lambda t: bimodal_response(t, magnitudes=[15, 40], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=10), 'baseline': 10},
+    2: {'response_func': lambda t: gaussian_peak(t, magnitude=25, peak_time=0.6, sd=0.15) + 5, 'baseline': 5},
+    3: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=25, end_value=0) + 25, 'baseline': 25},
+    4: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=20, end_value=0.05) + 20, 'baseline': 20},
+    5: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=10, end_value=30) + 10, 'baseline': 10},
+    6: {'response_func': lambda t: uniform_response(t, baseline=15), 'baseline': 15},
+    7: {'response_func': lambda t: bimodal_response(t, magnitudes=[10, 25], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=10), 'baseline': 10},
+    8: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=10, end_value=0) + 10, 'baseline': 10}
 }

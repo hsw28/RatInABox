@@ -16,7 +16,7 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
         "place_cell_centres": None,  # Adjust as needed for EnvA
         "wall_geometry": "geodesic",  # Adjust as needed for EnvA
         "min_fr": 0,  # Minimum firing rate
-        "max_fr": 1,  # Maximum firing rate
+        "max_fr": 12,  # Maximum firing rate
         "save_history": True  # Save history for plotting
     }
 

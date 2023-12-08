@@ -32,7 +32,7 @@ class CombinedPlaceTebcNeurons(PlaceCells):
             "place_cell_centres": None,  # Adjust as needed
             "wall_geometry": "geodesic",  # Adjust as needed
             "min_fr": 0,  # Adjust as needed
-            "max_fr": 1,  # Adjust as needed
+            "max_fr": 12,  # Adjust as needed
             "save_history": True  # Save history for plotting
         }
 
@@ -84,8 +84,11 @@ class CombinedPlaceTebcNeurons(PlaceCells):
         self.update()  # This updates the PlaceCells part of this class
 
         for i in range(self.num_neurons):
-            place_response = 0  # Default value if velocity is below threshold or history not populated
+            #place_response = response_profiles[self.cell_types[i]]['baseline']*self.balance_distribution[i] if current_velocity < 0.02 else 0
+
+            place_response = 0
             tebc_response = 0
+
 
             if current_velocity > 0.02:  # Velocity threshold is 2 cm/s
                 if len(self.history['firingrate']) > i and len(self.history['firingrate'][i]) > 0:

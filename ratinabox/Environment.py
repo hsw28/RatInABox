@@ -192,16 +192,16 @@ class Environment:
             pprint.pprint(all_default_params)
         return all_default_params
 
-    
+
     def agent_lookup(self, agent_names:Union[str, list[str]]  = None) -> list[Agent]:
         '''
-        This function will lookup a agent by name and return it. This assumes that the agent has been 
+        This function will lookup a agent by name and return it. This assumes that the agent has been
         added to the Environment.agents list and that each agent object has a unique name associated with it.
 
 
         Args:
-            agent_names (str, list[str]): the name of the agent you want to lookup. 
-        
+            agent_names (str, list[str]): the name of the agent you want to lookup.
+
         Returns:
             agents (list[Agent]): a list of agents that match the agent_names. If agent_names is a string, then a list of length 1 is returned. If agent_names is None, then None is returned
 
@@ -209,7 +209,7 @@ class Environment:
 
         if agent_names is None:
             return None
-        
+
         if isinstance(agent_names, str):
             agent_names = [agent_names]
 
@@ -220,11 +220,11 @@ class Environment:
             agents.append(agent)
 
         return agents
-    
+
     def _agent_lookup(self, agent_name: str) -> Agent:
 
         """
-        Helper function for agent lookup. 
+        Helper function for agent lookup.
 
         The procedure will work as follows:-
         1. If agent_name is None, the function will return None
@@ -240,7 +240,7 @@ class Environment:
 
         if agent_name is None:
             return None
-        
+
         if agent_name in self.agents_dict:
             return self.agents_dict[agent_name]
         else:
@@ -248,15 +248,15 @@ class Environment:
                 if agent.name == agent_name:
                     self.agents_dict[agent_name] = agent
                     return agent
-        
+
         raise ValueError('Agent name not found in Environment.agents list. Make sure the there no typos. agent name is case sensitive')
-    
+
     def add_agent(self, agent: Agent = None):
         """
         This function adds a agent to the Envirnoment.Agents list and also adds it to the Agent.agents_dict dictionary
         which allows you to lookup a agent by name.
 
-        This also ensures that the agent is associated with this Agent and has a unique name. 
+        This also ensures that the agent is associated with this Agent and has a unique name.
         Otherwise an index is appended to the name to make it unique and a warning is raised.
 
         Args:
@@ -267,7 +267,7 @@ class Environment:
 
         #check if a agent with this name already exists
         if agent.name in self.agents_dict:
-            
+
             # we try with the name of the agent + a number
 
             idx = len(self.Agents)
@@ -276,11 +276,11 @@ class Environment:
             if name in self.agents_dict:
                 raise ValueError(f"A agent with the name {agent.name}  and  {name} already exists. Please choose a unique name for each agent.\n\
                             This can cause trouble with lookups")
-                
+
             else:
-                agent.name = name 
+                agent.name = name
                 warnings.warn(f"A agent with the name {agent.name} already exists. Renaming to {name}")
-        
+
 
         self.Agents.append(agent)
         self.agents_dict[agent.name] = agent
@@ -297,17 +297,17 @@ class Environment:
 
         if isinstance(agent, str):
             agent = self._agent_lookup(agent)
-        
+
         if agent is None:
             return None
 
         self.Agents.remove(agent)
         self.agents_dict.pop(agent.name)
-        
-    
 
 
-    
+
+
+
     def add_wall(self, wall):
         """Add a wall to the (2D) environment.
         Extends self.walls array to include one new wall.
@@ -375,9 +375,9 @@ class Environment:
         self.n_object_types = len(np.unique(self.objects["object_types"]))
         return
 
-    def plot_environment(self, 
-                         fig=None, 
-                         ax=None, 
+    def plot_environment(self,
+                         fig=None,
+                         ax=None,
                          gridlines=False,
                          autosave=None,
                          **kwargs,):
@@ -477,7 +477,7 @@ class Environment:
             # plot objects if there isn't a kwarg setting it to false
             if 'plot_objects' in kwargs and kwargs['plot_objects'] == False:
                 pass
-            else: 
+            else:
                 object_cmap = matplotlib.colormaps[self.object_colormap]
                 for i, object in enumerate(self.objects["objects"]):
                     object_color = object_cmap(
@@ -505,7 +505,7 @@ class Environment:
                 ax.spines["top"].set_color("none")
                 ax.tick_params(length=0)
 
-            else: 
+            else:
                 ax.grid(False)
                 ax.axis("off")
             ax.set_xlim(left=extent[0] - 0.02, right=extent[1] + 0.02)
@@ -554,8 +554,8 @@ class Environment:
                 ex = self.extent
                 area = (ex[1] - ex[0]) * (ex[3] - ex[2])
                 delta = np.sqrt(area / n)
-                x = np.arange(ex[0] + delta / 2, ex[1] - delta / 2 + 1e-6, delta)
-                y = np.arange(ex[2] + delta / 2, ex[3] - delta / 2 + 1e-6, delta)
+                x = np.linspace(ex[0] + delta /2, ex[1] - delta /2, int((ex[1] - ex[0])/delta))
+                y = np.linspace(ex[2] + delta /2, ex[3] - delta /2, int((ex[3] - ex[2])/delta))
                 positions = np.array(np.meshgrid(x, y)).reshape(2, -1).T
                 n_uniformly_distributed = positions.shape[0]
                 if method[7:] == "_jitter":
@@ -682,7 +682,7 @@ class Environment:
                 ), "geodesic geometry is not available for periodic boundary conditions"
                 assert (
                     len(walls) <= 5
-                ), """unfortunately geodesic geometry is only defined in closed rooms with one additional wall. Try using "line_of_sight" or "euclidean" instead. 
+                ), """unfortunately geodesic geometry is only defined in closed rooms with one additional wall. Try using "line_of_sight" or "euclidean" instead.
                 (efficient geometry calculations with more than 1 wall are super hard I have discovered!)"""
                 distances = utils.get_distances_between(vectors=vectors)
                 if len(walls) == 4:

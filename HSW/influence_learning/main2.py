@@ -73,7 +73,7 @@ Examples:
 
     python main2.py --balance_values 0.5,0.7 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed
 
-    python main2.py --balance_values 0,.2,.6,.8,1 --balance_dist fixed --responsive_values 0,.2,.6,.8,1 --responsive_type fixed
+    python main2.py --balance_values 0,.25,.5,.75,1 --balance_dist fixed --responsive_values .25,.5,.75,1 --responsive_type fixed
 
 
 Description:
@@ -187,11 +187,25 @@ balance_values = parse_list(args.balance_values) if args.balance_values else [0.
 responsive_values = parse_list(args.responsive_values) if args.responsive_values else [0.5]
 
 
+balance_zero_done = False
+responsive_zero_done = False
+
 # Perform grid search over balance and responsive rates
 with open(results_filepath, "w") as results_file:
     for balance_value, responsive_val in itertools.product(balance_values, responsive_values):
+        # Skip redundant zero value iterations
+        if balance_value == 0:
+            if balance_zero_done and len(balance_values) > 1:
+                continue
+            balance_zero_done = True
+        if responsive_val == 0:
+            if responsive_zero_done and len(responsive_values) > 1:
+                continue
+            responsive_zero_done = True
+
         print(balance_value)
         print(responsive_val)
+
         balance_distribution = get_distribution_values(args.balance_dist, [balance_value, args.balance_std], num_neurons)
         responsive_distribution = get_distribution_values(args.responsive_type, [responsive_val], num_neurons)
 
