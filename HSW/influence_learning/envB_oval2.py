@@ -81,7 +81,7 @@ def simulate_envB(agent, position_data, balance_distribution_envA, tebc_responsi
         agent_position = agent.history['pos'][index]
 
         # Update neuron states
-        combined_neurons.update_state(agent_position, time_since_CS, time_since_US, index)
+        combined_neurons.update_my_state(agent_position, time_since_CS, time_since_US, index)
 
         # Store firing rates
         firing_rates[:, index] = combined_neurons.get_firing_rates()

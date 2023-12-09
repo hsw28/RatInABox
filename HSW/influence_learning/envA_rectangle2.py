@@ -1,37 +1,46 @@
 import numpy as np
 from ratinabox.Environment import Environment
 from ratinabox.Agent import Agent
-from CombinedPlaceTebcNeurons2 import CombinedPlaceTebcNeurons
+from ratinabox.Neurons import Neurons, PlaceCells
 from trial_marker2 import determine_cs_us
+from TEBCcells import TEBC
+
 
 def simulate_envA(agent, position_data, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types):
     # Number of neurons
     N = 80
 
     # Define place cell parameters for EnvA
-    place_cells_params_envA = {
-        "n": N,  # Number of place cells
-        "description": "gaussian",  # Adjust as needed for EnvA
-        "widths": 0.20,  # Adjust as needed for EnvA
-        "place_cell_centres": None,  # Adjust as needed for EnvA
-        "wall_geometry": "geodesic",  # Adjust as needed for EnvA
-        "min_fr": 0,  # Minimum firing rate
-        "max_fr": 12,  # Maximum firing rate
-        "save_history": True  # Save history for plotting
-    }
+    PCs = PlaceCells(
+        agent,
+        params={
+            "n": N,  # Number of place cells
+            "description": "gaussian",  # Adjust as needed for EnvA
+            "widths": 0.20,  # Adjust as needed for EnvA
+            "place_cell_centres": None,  # Adjust as needed for EnvA
+            "wall_geometry": "geodesic",  # Adjust as needed for EnvA
+            "min_fr": 0,  # Minimum firing rate
+            "max_fr": 12,  # Maximum firing rate
+            "save_history": True  # Save history for plotting #JUST CHANGED
+            }
+        )
 
     # Import trajectory into the agent
+
+    '''
     times = position_data[0]  # Timestamps
     positions = position_data[1:3].T  # Positions (x, y)
     unique_times, indices = np.unique(times, return_index=True)
     unique_positions = positions[indices]
     agent.import_trajectory(times=unique_times, positions=unique_positions)
+    '''
 
-    # Create CombinedPlaceTebcNeurons instance for EnvA
-    combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution, place_cells_params_envA, tebc_responsive_neurons, cell_types)
+    # Create instances for EnvA
+    #combined_neurons = CombinedPlaceTebcNeurons(agent, N, balance_distribution, responsive_distribution, place_cells_params_envA, tebc_responsive_neurons, cell_types)
+    eyeblink_neurons = TEBC(agent, N, balance_distribution, responsive_distribution, PCs.params, tebc_responsive_neurons, cell_types)
+
     firing_rates = np.zeros((N, position_data.shape[1]))
-    combined_neurons.calculate_smoothed_velocity(position_data)
-
+    eyeblink_neurons.calculate_smoothed_velocity(position_data)
 
     # Initialize last CS and US times
     last_CS_time = None
@@ -39,9 +48,12 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
 
 
     # Simulation loop
-    for index in range(unique_positions.shape[0]):
+
+    times = position_data[0,:]
+
+    for index in range(len(times)):
         # Current timestamp
-        current_time = unique_times[index]
+        current_time = times[index]
 
         # Update the agent
         agent.update()
@@ -63,13 +75,19 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
         # Retrieve the agent's current position from the history
         agent_position = agent.history['pos'][index]
 
-        # Update neuron states
-        combined_neurons.update_state(agent_position, time_since_CS, time_since_US, index)
+        PCs.update()
+
+        place_firing = (1 - eyeblink_neurons.balance_distribution)*(PCs.history['firingrate'])
+        place_firing_recent = place_firing[-1]
+
+
+        tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index)
 
         # Store firing rates
-        firing_rates[:, index] = combined_neurons.get_firing_rates()
+
+        firing_rates[:, index] = tebc_firing+place_firing_recent
 
     # Return the firing rates for further analysis
 
 
-    return firing_rates, agent, combined_neurons
+    return eyeblink_neurons, firing_rates, agent

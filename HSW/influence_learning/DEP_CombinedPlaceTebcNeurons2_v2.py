@@ -24,6 +24,8 @@ class CombinedPlaceTebcNeurons(PlaceCells):
     def __init__(self, agent, N, balance_distribution, responsive_distribution, place_cells_params, tebc_responsive_neurons=None, cell_types=None):
         super().__init__(agent, place_cells_params)
 
+        agent.update()
+
         # Define parameters for PlaceCells
         place_cells_params = {
             "n": N,  # Number of place cells
@@ -57,6 +59,8 @@ class CombinedPlaceTebcNeurons(PlaceCells):
         self.history = {'t': [], 'firingrate': [], 'spikes': []}
 
 
+
+
     def calculate_smoothed_velocity(self, position_data):
         times = position_data[0, :]   # Timestamps
         xpos = position_data[1, :]    # X positions
@@ -73,38 +77,31 @@ class CombinedPlaceTebcNeurons(PlaceCells):
 
         # Smooth the velocity data
         window_size = 15
+
         self.smoothed_velocity = pd.Series(vel_vector).rolling(window=window_size, min_periods=1, center=True).mean().tolist()
 
 
-    def update_my_state(self, agent_position, time_since_CS, time_since_US, current_index):
+    def update_state(self, agent_position, time_since_CS, time_since_US, current_index):
         # Check the current smoothed velocity
         current_velocity = self.smoothed_velocity[current_index] if current_index < len(self.smoothed_velocity) else 0
-
         self.agent.position = agent_position
-        self.update()  # This updates the PlaceCells part of this class
+        self.update(save_history=False)
 
+        # Process each neuron
         for i in range(self.num_neurons):
-            #place_response = response_profiles[self.cell_types[i]]['baseline']*self.balance_distribution[i] if current_velocity < 0.02 else 0
+            # Obtain the updated place response from the place cells' firing rates
+            place_response = self.firing_rates[i] if current_velocity > 0.02 else 0
 
-            last_firing_rate = self.history['firingrate'][i][-1] if len(self.history['firingrate']) > i and len(self.history['firingrate'][i]) > 0 else 0
-
-            place_response = 0
+            # Calculate tEBC response
             tebc_response = 0
-
-
-            if current_velocity > 0.02:  # Velocity threshold is 2 cm/s
-                if len(self.history['firingrate']) > i and len(self.history['firingrate'][i]) > 0:
-                    place_response = self.history['firingrate'][i][-1]
-
             if self.tebc_responsive_neurons[i]:
                 cell_type = self.cell_types[i]
                 response_func = response_profiles[cell_type]['response_func']
-                tebc_response = response_func(time_since_CS, last_firing_rate)
+                tebc_response = response_func(time_since_CS, place_response)
 
-            # Retrieve firing rates from Agent.history
+            # Combine place response and tEBC response
             self.firing_rates[i] = (1 - self.balance_distribution[i]) * place_response + self.balance_distribution[i] * tebc_response
 
-        self.save_to_history()  # Save current state to history
 
     def calculate_firing_rate(self, agent_position, time_since_CS, time_since_US):
         firing_rates = np.zeros(self.num_neurons)

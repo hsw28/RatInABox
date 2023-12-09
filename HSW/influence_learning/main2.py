@@ -20,6 +20,8 @@ import sys
 sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
 from cond_decoding_AvsB import cond_decoding_AvsB
 from cebra import CEBRA
+import cProfile
+import pstats
 
 
 
@@ -190,6 +192,22 @@ responsive_values = parse_list(args.responsive_values) if args.responsive_values
 balance_zero_done = False
 responsive_zero_done = False
 
+
+agentA = Agent(envA)
+times = position_data_envA[0]  # Timestamps
+positions = position_data_envA[1:3].T  # Positions (x, y)
+unique_times, indices = np.unique(times, return_index=True)
+unique_positions = positions[indices]
+agentA.import_trajectory(times=unique_times, positions=unique_positions)
+
+
+agentB = Agent(envB)
+times = position_data_envB[0]  # Timestamps
+positions = position_data_envB[1:3].T  # Positions (x, y)
+unique_times, indices = np.unique(times, return_index=True)
+unique_positions = positions[indices]
+agentB.import_trajectory(times=unique_times, positions=unique_positions)
+
 # Perform grid search over balance and responsive rates
 with open(results_filepath, "w") as results_file:
     for balance_value, responsive_val in itertools.product(balance_values, responsive_values):
@@ -203,27 +221,29 @@ with open(results_filepath, "w") as results_file:
                 continue
             responsive_zero_done = True
 
-        print(balance_value)
-        print(responsive_val)
 
         balance_distribution = get_distribution_values(args.balance_dist, [balance_value, args.balance_std], num_neurons)
         responsive_distribution = get_distribution_values(args.responsive_type, [responsive_val], num_neurons)
 
-        # Create an agent initially in EnvA
-        agent = Agent(envA)
-
         # Simulate in Environment A
         tebc_responsive_neurons, cell_types = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
-        response_envA, agentA, combined_neuronsA = simulate_envA(agent, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)
 
-        balance_distribution_envA = combined_neuronsA.balance_distribution
-        tebc_responsive_rates_envA = combined_neuronsA.tebc_responsive_neurons
+        # Profile the function
+        cProfile.runctx('simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)', globals(), locals(), 'profile_stats.prof')
+        p = pstats.Stats('profile_stats.prof')
+        p.sort_stats('cumulative').print_stats(10)
 
-        # Update the agent's environment to EnvB
-        agent = Agent(envB)
+        # Now run the function normally to capture its output
+        eyeblink_neurons, response_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)
+
+
+
+        balance_distribution_envA = eyeblink_neurons.balance_distribution
+        tebc_responsive_rates_envA = eyeblink_neurons.tebc_responsive_neurons
 
         # Simulate in Environment B using the parameters from Environment A
-        response_envB, agentB, combined_neuronsB = simulate_envB(agent, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, cell_types)
+        #response_envB, agentB, combined_neuronsB = simulate_envB(agentB, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, cell_types)
+
 
 
         ###PLOTTING
@@ -249,6 +269,7 @@ with open(results_filepath, "w") as results_file:
 
 
 
+
         #####save
         # Construct the full file paths
         filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
@@ -256,8 +277,11 @@ with open(results_filepath, "w") as results_file:
         full_path_envA = os.path.join(save_directory, filename_envA)
         full_path_envB = os.path.join(save_directory, filename_envB)
         # Save the response arrays to files
+
+
         np.save(full_path_envA, response_envA)
-        np.save(full_path_envB, response_envB)
+        '''
+        np.save(full_path_envB, combined_neuronsB.history['firingrate'])
         ######
 
         # Assess learning transfer and other metrics
@@ -291,4 +315,5 @@ with open(results_filepath, "w") as results_file:
 
 
         # Print confirmation
+        '''
         print(f"Saved results to {full_path_envA} and {full_path_envB}")

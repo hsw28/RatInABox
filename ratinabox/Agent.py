@@ -468,6 +468,7 @@ class Agent:
 
         The head direction is updated by a low pass filter of the the current velocity vector.
         """
+
         if self.Environment.dimensionality == "1D": #its just the sign of the velocity
             self.head_direction = np.sign(self.velocity)
 

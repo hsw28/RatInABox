@@ -19,7 +19,7 @@ combined_neurons = CombinedPlaceTebcNeurons(num_neurons, place_cells, balance, t
 '''
 
 
-class CombinedPlaceTebcNeurons(PlaceCells):
+class TEBC(PlaceCells):
     default_params = dict()  # Add this line to define the default_params attribute
     def __init__(self, agent, N, balance_distribution, responsive_distribution, place_cells_params, tebc_responsive_neurons=None, cell_types=None):
         super().__init__(agent, place_cells_params)
@@ -33,7 +33,7 @@ class CombinedPlaceTebcNeurons(PlaceCells):
             "wall_geometry": "geodesic",  # Adjust as needed
             "min_fr": 0,  # Adjust as needed
             "max_fr": 12,  # Adjust as needed
-            "save_history": True  # Save history for plotting
+            "save_history": False  # Save history for plotting -- dont think this done anything
         }
 
         # Initialize tebc_responsive_neurons with a default value if not provided
@@ -76,35 +76,24 @@ class CombinedPlaceTebcNeurons(PlaceCells):
         self.smoothed_velocity = pd.Series(vel_vector).rolling(window=window_size, min_periods=1, center=True).mean().tolist()
 
 
-    def update_my_state(self, agent_position, time_since_CS, time_since_US, current_index):
+    def update_my_state(self, time_since_CS, current_index):
         # Check the current smoothed velocity
         current_velocity = self.smoothed_velocity[current_index] if current_index < len(self.smoothed_velocity) else 0
 
-        self.agent.position = agent_position
-        self.update()  # This updates the PlaceCells part of this class
 
         for i in range(self.num_neurons):
-            #place_response = response_profiles[self.cell_types[i]]['baseline']*self.balance_distribution[i] if current_velocity < 0.02 else 0
-
-            last_firing_rate = self.history['firingrate'][i][-1] if len(self.history['firingrate']) > i and len(self.history['firingrate'][i]) > 0 else 0
-
-            place_response = 0
             tebc_response = 0
-
-
-            if current_velocity > 0.02:  # Velocity threshold is 2 cm/s
-                if len(self.history['firingrate']) > i and len(self.history['firingrate'][i]) > 0:
-                    place_response = self.history['firingrate'][i][-1]
-
             if self.tebc_responsive_neurons[i]:
                 cell_type = self.cell_types[i]
                 response_func = response_profiles[cell_type]['response_func']
-                tebc_response = response_func(time_since_CS, last_firing_rate)
+                tebc_response = response_func(time_since_CS)
 
-            # Retrieve firing rates from Agent.history
-            self.firing_rates[i] = (1 - self.balance_distribution[i]) * place_response + self.balance_distribution[i] * tebc_response
 
-        self.save_to_history()  # Save current state to history
+            self.firing_rates[i] = (self.balance_distribution[i] * tebc_response)
+        #    print("rate")
+
+        self.save_to_history()
+        return self.firing_rates
 
     def calculate_firing_rate(self, agent_position, time_since_CS, time_since_US):
         firing_rates = np.zeros(self.num_neurons)
@@ -118,27 +107,7 @@ class CombinedPlaceTebcNeurons(PlaceCells):
             firing_rates[i] = (1 - self.balance_distribution[i]) * place_response + self.balance_distribution[i] * tebc_response
         return firing_rates
 
-    def update_tebc_response(self, retain_tebc_response):
-        """
-        Update or retain the tEBC response.
-        retain_tebc_response: Boolean indicating whether to retain the existing tEBC response.
-        """
-        if not retain_tebc_response:
-            # Reset or recalculate the tEBC response component
-            self.tebc_responsive_neurons = self.assign_tebc_responsiveness_and_types()
 
     def get_firing_rates(self):
         # Return the current firing rates of all neurons
         return self.firing_rates
-
-    def plot_rate_timeseries(self):
-        # This method acts as a wrapper to the parent class's plot_ratemap method
-        super(CombinedPlaceTebcNeurons, self).plot_rate_timeseries()
-
-    def plot_rate_map(self):
-        # This method acts as a wrapper to the parent class's plot_ratemap method
-        super(CombinedPlaceTebcNeurons, self).plot_rate_map()
-
-    def plot_place_cell_locations(self):
-        # This method acts as a wrapper to the parent class's plot_ratemap method
-        super(CombinedPlaceTebcNeurons, self).plot_place_cell_locations()

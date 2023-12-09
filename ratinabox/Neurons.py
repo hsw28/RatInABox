@@ -93,7 +93,7 @@ class Neurons:
         "color": None,  # just for plotting
         "noise_std": 0,  # 0 means no noise, std of the noise you want to add (Hz)
         "noise_coherence_time": 0.5,
-        "min_fr":0.0, #not all cells use max_fr nd min_fr but we define them here in the parent class for those that do 
+        "min_fr":0.0, #not all cells use max_fr nd min_fr but we define them here in the parent class for those that do
         "max_fr":1.0,
         "save_history": True,  # whether to save history (set to False if you don't intend to access Neuron.history for data after, for better memory performance)
     }
@@ -102,7 +102,7 @@ class Neurons:
         """Initialise Neurons(), takes as input a parameter dictionary. Any values not provided by the params dictionary are taken from a default dictionary below.
 
         Args:
-            Agent. The RatInABox Agent these cells belong to. 
+            Agent. The RatInABox Agent these cells belong to.
             params (dict, optional). Defaults to {}.
 
         Typically you will not actually initialise a Neurons() class, instead you will initialised by one of it's subclasses.
@@ -124,7 +124,7 @@ class Neurons:
         self.history["firingrate"] = []
         self.history["spikes"] = []
 
-        self.colormap = "inferno" # default colormap for plotting ratemaps 
+        self.colormap = "inferno" # default colormap for plotting ratemaps
 
         if ratinabox.verbose is True:
             print(
@@ -139,11 +139,16 @@ class Neurons:
             pprint.pprint(all_default_params)
         return all_default_params
 
-    def update(self, **kwargs):
-        """Update the firing rate of the Neurons() class. This is called by the Agent.update() function. This core function should be called by the user on each loop in order to refresh the firing rate of the Neurons() class in line with the Agent's current state. It will also save the firing rate and spikes to the Agent.history dictionary if self.save_history is True.
-        
-        Args: 
-            • kwargs will be passed into get_state()  
+    def update(self, save_history_override=None, **kwargs):
+        """Update the firing rate of the Neurons() class. This is called by the Agent.update() function.
+        This core function should be called by the user on each loop in order to refresh the firing rate of
+        the Neurons() class in line with the Agent's current state. It will also save the firing rate and
+        spikes to the Agent.history dictionary based on the save_history_override parameter or self.save_history
+        if save_history_override is None.
+
+        Args:
+            • save_history_override (bool, optional): If provided, overrides self.save_history for this update.
+            • kwargs will be passed into get_state()
         """
 
         # update noise vector
@@ -163,8 +168,12 @@ class Neurons:
             firingrate = self.get_state(**kwargs)
         self.firingrate = firingrate.reshape(-1)
         self.firingrate = self.firingrate + self.noise
-        if self.save_history is True:
+
+        # Determine whether to save history
+        save_history = self.save_history if save_history_override is None else save_history_override
+        if save_history:
             self.save_to_history()
+
         return
 
     def get_state(self, **kwargs):
@@ -180,7 +189,7 @@ class Neurons:
             firingrate[:,:,i] = self.get_state(evaluate_at=evaluate_at, head_direction=head_direction, **kwargs)
         firingrate = np.mean(firingrate,axis=2)
         return firingrate
-    
+
     def plot_rate_timeseries(
         self,
         t_start=0.0,
@@ -564,11 +573,11 @@ class Neurons:
 
 
     def plot_angular_rate_map(self, chosen_neurons="all", fig=None, ax=None, autosave=None):
-        """Plots the position-averaged firing rate map of the neuron as a function of head direction. To od this ist calculates the spatial receptive fields at many head directions and averages them over position (therefore it may be slow). 
+        """Plots the position-averaged firing rate map of the neuron as a function of head direction. To od this ist calculates the spatial receptive fields at many head directions and averages them over position (therefore it may be slow).
         Args:
             chosen_neurons (str, optional): The neurons to plot. Defaults to "all".
             fig, ax (_type_, optional): matplotlib fig, ax objects ot plot onto (optional).
-            autosave (bool, optional): if True, will try to save the figure into `ratinabox.figure_directory`. 
+            autosave (bool, optional): if True, will try to save the figure into `ratinabox.figure_directory`.
                                        Defaults to None in which case looks for global constant ratinabox.autosave_plots
         """
         chosen_neurons = self.return_list_of_neurons(chosen_neurons=chosen_neurons)
@@ -588,10 +597,10 @@ class Neurons:
         for (i,ang) in enumerate(angles):
             head_direction = np.array([np.cos(ang),np.sin(ang)])
             rm[:,:,i] = self.get_state(evaluate_at='all', head_direction=head_direction)
-        
+
         # average over positions leaving just head direction selectivity
         rm_hd = np.mean(rm,axis=1)
-        
+
         # plot head direction rate map
         for (i,n) in enumerate(chosen_neurons):
             perneuron_rm = rm_hd[n,:]
@@ -603,11 +612,11 @@ class Neurons:
             ax[i].set_ylim([0, 1.1*np.max(rm_hd[n,:])])
             ax[i].tick_params(pad=-20)
             ax[i].set_xticklabels(["E", "N", "W", "S"])
-        
+
         ratinabox.utils.save_figure(fig, self.name + "_angularratemaps", save=autosave)
 
-        return fig, ax 
-    
+        return fig, ax
+
 
     def save_to_history(self):
         cell_spikes = np.random.uniform(0, 1, size=(self.n,)) < (
@@ -953,10 +962,10 @@ class GridCells(Neurons):
     - delta --------------------------------- (the_single_value)
     - modules ------------------------------- (module1_val, module2_val, module3_val, ...)
     - truncnorm ----------------------------- (low, high, loc, scale)
-    For example to get three modules of gridcells I could set params = {'gridscale_distribution':'modules', 'gridscale':(0.5, 1, 1.5)} which would give me three modules of grid cells with grid scales 0.5, 1 and 1.5. 
+    For example to get three modules of gridcells I could set params = {'gridscale_distribution':'modules', 'gridscale':(0.5, 1, 1.5)} which would give me three modules of grid cells with grid scales 0.5, 1 and 1.5.
 
     params['description'] gives the place cells model being used. Currently either rectified sum of three cosines "three_rectified_cosines" or a shifted sum of three cosines "three_shifted_cosines" (which is similar, just a little softer at the edges, see Solstad et al. 2006)
-    
+
     List of functions:
         • get_state()
         • set_phase_offsets()
@@ -969,9 +978,9 @@ class GridCells(Neurons):
         "gridscale_distribution": "uniform",
         "gridscale": (0.50, 1),
         "orientation_distribution": "uniform",
-        "orientation": (0, 2 * np.pi), #radians 
+        "orientation": (0, 2 * np.pi), #radians
         "phase_offset_distribution": "uniform",
-        "phase_offset": (0, 2 * np.pi), #degrees 
+        "phase_offset": (0, 2 * np.pi), #degrees
         "description": "three_rectified_cosines",  # can also be "three_shifted_cosines" as in Solstad 2006 Eq. (2)
         "min_fr": 0,
         "max_fr": 1,
@@ -1146,20 +1155,20 @@ class VectorCells(Neurons):
             • FieldOfViewOVCs
         • AgentVectorCells ("AVCs")
             • FieldOfViewAVCs
-    
+
     All vector cells are similar in that every cell responds to <something> in the Environment with a preferred tuning_distance, tuning_angle, sigma_distances (i.w. width of receptive field in distance) and sigma_angle. They are different in what they respond to (<something> = walls, objects, agents) and how they are arranged (randomly, in a field-of-view, etc...).
 
-    All vector cells have receptive fields which is a von Mises distributions in angle (mean = tuning_angle, 1/sqrt_kappa ~= std = sigma_angle) and 
+    All vector cells have receptive fields which is a von Mises distributions in angle (mean = tuning_angle, 1/sqrt_kappa ~= std = sigma_angle) and
     a Gaussian in distance (mean = tuning_distance, std = sigma_distance). There are many ways we might like to set these parameters for each neuron...
 
     A summary of the parameters:
     • params['n']: number of cells (if any params are passed in as lists or arrays, this is overwritten)
     • params['reference_frame']: "allocentric" or "egocentric"
-    • parmas['cell_arrangement'] (str): how to set the tuning parameters for each cell. Possible cell arrangements are: 
+    • parmas['cell_arrangement'] (str): how to set the tuning parameters for each cell. Possible cell arrangements are:
         • Randomly ["cell_arrangement": "random"] (default)
-        • Field-of-view ["cell_arrangement": "uniform_manifold" or "diverging_manifold"]. This is automatically done by the by the `FieldOfViewOVCs/BVCs/AVCs` subclasses. 
-        • User defined: ["cell_arrangement": my_funky_tuning_parameter_setting_function] pass a function that returns 4 lists of the same length corresponding to the tuning distances, tuning angles, sigma distances and sigma angles 
-    
+        • Field-of-view ["cell_arrangement": "uniform_manifold" or "diverging_manifold"]. This is automatically done by the by the `FieldOfViewOVCs/BVCs/AVCs` subclasses.
+        • User defined: ["cell_arrangement": my_funky_tuning_parameter_setting_function] pass a function that returns 4 lists of the same length corresponding to the tuning distances, tuning angles, sigma distances and sigma angles
+
     iff cell_arrangement is "random" 8 additional parameters, through which to control the parameters of cell receptive fields, become relevant. the following parameters become relevant:
     • params["tuning_distance_distribution"] (str): distribution from which to sample the tuning distances
     • params["tuning_distance"] (tuple or array): if tuple, parameters of the distribution from which to sample the tuning_distance parameter. If array, the exact values of the tuning_distance parameter for each cell
@@ -1180,11 +1189,11 @@ class VectorCells(Neurons):
     - truncnorm ----------------------------- (low, high, loc, scale)
     The only diversion is that, in addition to the above, sigma_distance_distribution which can be set to "diverging" in which case the radial width of the receptive field is set according to the Hartley model (Hartley et al. 2000). In this case the parameters give (xi, beta) the (offset, inverse-slope) of the linear relationship between sigma and tuning_distance.
     """
-    
+
     default_params = {
         "n": 10,
         "reference_frame": "allocentric",
-        "cell_arrangement": "random", 
+        "cell_arrangement": "random",
         #the following are only used if cell_arrangement is "random"
         "tuning_distance_distribution": "uniform",
         "tuning_distance":(0.05,0.3),
@@ -1199,7 +1208,7 @@ class VectorCells(Neurons):
     def __init__(self, Agent, params={}):
         """Initialise VectorCells(), takes as input an Agent and a parameter dictionary. Any values not provided by the params dictionary are taken from a default dictionary.
         Args:
-            Agent. The RatInABox Agent these cells belong to. 
+            Agent. The RatInABox Agent these cells belong to.
             params (dict, optional). Defaults to {}.
         """
         assert (
@@ -1237,26 +1246,26 @@ class VectorCells(Neurons):
         self.tuning_distances = None
         self.sigma_angles = None
         self.sigma_distances = None
-        
 
-        # set the parameters of each cell. 
-        (self.tuning_distances, 
-         self.tuning_angles, 
-         self.sigma_distances, 
+
+        # set the parameters of each cell.
+        (self.tuning_distances,
+         self.tuning_angles,
+         self.sigma_distances,
          self.sigma_angles) = self.set_tuning_parameters(**self.params)
         self.n = len(self.tuning_distances) #ensure n is correct
         self.firingrate = np.zeros(self.n)
         self.noise = np.zeros(self.n)
-        self.cell_colors = None 
+        self.cell_colors = None
 
-    
+
     def set_tuning_parameters(self, **kwargs):
         """Get the tuning parameters for the vector cells.
          Args:
             • cell_arrangement (str | function ): "random_manifold" (randomly generated manifolds) or
-                                                  "uniform_manifold" (all receptive fields the same size or 
+                                                  "uniform_manifold" (all receptive fields the same size or
                                                   "diverging_manifold" (receptive fields are bigger, the further away from the agent they are)
-                                                  OR any function that returns 4 lists of the same length corresponding to 
+                                                  OR any function that returns 4 lists of the same length corresponding to
                                                   the tuning distances, tuning angles, sigma distances and sigma angles
 
         Returns:
@@ -1270,25 +1279,25 @@ class VectorCells(Neurons):
 
         mu_d, mu_theta, sigma_d, sigma_theta = None, None, None, None
 
-        # check if the manifold is a function passed by the user 
-        if callable(self.params['cell_arrangement']): #users passed own function 
+        # check if the manifold is a function passed by the user
+        if callable(self.params['cell_arrangement']): #users passed own function
             mu_d, mu_theta, sigma_d, sigma_theta =  self.params['cell_arrangement'](**kwargs)
-        elif (self.cell_arrangement is None) or self.cell_arrangement[:6] == "random": #random tuning for each cell 
+        elif (self.cell_arrangement is None) or self.cell_arrangement[:6] == "random": #random tuning for each cell
             mu_d, mu_theta, sigma_d, sigma_theta = utils.create_random_assembly(**kwargs)
-        elif self.cell_arrangement == "uniform_manifold": #radial assembly uniform width of all cells 
+        elif self.cell_arrangement == "uniform_manifold": #radial assembly uniform width of all cells
             mu_d, mu_theta, sigma_d, sigma_theta =  utils.create_uniform_radial_assembly(**kwargs)
-        elif self.cell_arrangement == "diverging_manifold": #radial assembly diverging width of all cells 
+        elif self.cell_arrangement == "diverging_manifold": #radial assembly diverging width of all cells
             mu_d, mu_theta, sigma_d, sigma_theta =  utils.create_diverging_radial_assembly(**kwargs)
         else:
             raise ValueError("cell_arrangement must be either 'uniform_manifold' or 'diverging_manifold' or a function")
-        
+
         # ensure the lists are not None
         assert mu_d is not None, "Tuning distance must not be None"
         assert mu_theta is not None, "Tuning angles must not be None"
         assert sigma_d is not None, "Sigma distance must not be None"
         assert sigma_theta is not None, "Sigma angles must not be None"
-        
-        #convert the lists to arrays 
+
+        #convert the lists to arrays
         mu_d, mu_theta, sigma_d, sigma_theta = (
             np.array(mu_d),
             np.array(mu_theta),
@@ -1313,19 +1322,19 @@ class VectorCells(Neurons):
         warnings.warn("display_manifold() is deprecated. Please use display_vector_cells() instead.")
         return self.display_vector_cells(fig=fig, ax=ax, t=t, **kwargs)
 
-    def display_vector_cells(self, 
-                         fig=None, 
-                         ax=None, 
+    def display_vector_cells(self,
+                         fig=None,
+                         ax=None,
                          t=None,
                          **kwargs):
-        """Visualises the current firing rate of these cells relative to the Agent. 
-        Essentially this plots the "manifold" ontop of the Agent. 
-        Each cell is plotted as an ellipse where the alpha-value of its facecolor reflects the current firing rate 
+        """Visualises the current firing rate of these cells relative to the Agent.
+        Essentially this plots the "manifold" ontop of the Agent.
+        Each cell is plotted as an ellipse where the alpha-value of its facecolor reflects the current firing rate
         (normalised against the approximate maximum firing rate for all cells, but, take this just as a visualisation).
         Each ellipse is an approximation of the receptive field of the cell which is a von Mises distribution in angule and a Gaussian in distance.
         The width of the ellipse in r and theta give 1 sigma of these distributions (for von Mises: kappa ~= 1/sigma^2).
 
-        This assumes the x-axis in the Agent's frame of reference is the heading direction. 
+        This assumes the x-axis in the Agent's frame of reference is the heading direction.
         (Or the heading diection is the X-axis for egocentric frame of reference). IN this case the Y-axis is the towards the "left" of the agent.
 
         Args:
@@ -1345,21 +1354,21 @@ class VectorCells(Neurons):
 
         pos = self.Agent.history["pos"][t_id]
 
-        
+
 
         y_axis_wrt_agent = np.array([0, 1])
         x_axis_wrt_agent = np.array([1,0])
         head_direction = self.Agent.history["head_direction"][t_id]
         head_direction_angle = 0.0
-        
+
 
         if self.reference_frame == "egocentric":
             head_direction = self.Agent.history["head_direction"][t_id]
             # head direction angle (CCW from true North)
-            head_direction_angle = (180 / np.pi) * ratinabox.utils.get_angle(head_direction)  
-            
+            head_direction_angle = (180 / np.pi) * ratinabox.utils.get_angle(head_direction)
+
             # this assumes the "x" dimension is the agents head direction and "y" is to its left
-            x_axis_wrt_agent = head_direction / np.linalg.norm(head_direction)  
+            x_axis_wrt_agent = head_direction / np.linalg.norm(head_direction)
             y_axis_wrt_agent = utils.rotate(x_axis_wrt_agent, np.pi / 2)
 
 
@@ -1381,18 +1390,18 @@ class VectorCells(Neurons):
                                 edgecolor="dimgrey",
                                 zorder = 2.1,
                                 )
-        if self.cell_colors is None: 
+        if self.cell_colors is None:
             facecolor = self.color if self.color is not None else "C1"
             facecolor = np.array(matplotlib.colors.to_rgba(facecolor))
             facecolor_array = np.tile(np.array(facecolor), (self.n, 1))
         else:
-            facecolor_array = self.cell_colors #made in child class init. Each cell can have a different plot color. 
-            # e.g. if cells are slective to different object types or however you like 
+            facecolor_array = self.cell_colors #made in child class init. Each cell can have a different plot color.
+            # e.g. if cells are slective to different object types or however you like
         facecolor_array[:, -1] = 0.7*np.maximum(
             0, np.minimum(1, fr / (0.5 * self.max_fr))
-        ) # scale alpha so firing rate shows as how "solid" (up to 0.7 so you can _just_ seen whats beneath) to color of this vector cell is. 
+        ) # scale alpha so firing rate shows as how "solid" (up to 0.7 so you can _just_ seen whats beneath) to color of this vector cell is.
         ec.set_facecolors(facecolor_array)
-        ax.add_collection(ec) 
+        ax.add_collection(ec)
 
         return fig, ax
 
@@ -1402,8 +1411,8 @@ class BoundaryVectorCells(VectorCells):
     These are a subclass of VectorCells() which are selective to walls and boundaries in the environment.
 
     By default cell tuning params are initialised randomly and are "allocentric" (see VecTorCells doc string for more details).
-    
-    BVCs can be arranged in an egocentric "field of view" (see FieldOfViewBVCs subclass). 
+
+    BVCs can be arranged in an egocentric "field of view" (see FieldOfViewBVCs subclass).
 
     List of functions:
         • get_state()
@@ -1419,7 +1428,7 @@ class BoundaryVectorCells(VectorCells):
 
     def __init__(self, Agent, params={}):
         """
-        Initialise BoundaryVectorCells(), takes as input a parameter dictionary. 
+        Initialise BoundaryVectorCells(), takes as input a parameter dictionary.
         Any values not provided by the params dictionary are taken from a default dictionary below.
 
         Args:
@@ -1453,12 +1462,12 @@ class BoundaryVectorCells(VectorCells):
             test_angles.append(2 * np.pi * i * self.dtheta / 360)
         self.test_directions = np.array(test_directions)
         self.test_angles = np.array(test_angles)
-        
-        
+
+
         # calculate normalising constants for BVS firing rates in the current environment. Any extra walls you add from here onwards you add will likely push the firingrate up further.
         locs = self.Agent.Environment.discretise_environment(dx=0.04)
         locs = locs.reshape(-1, locs.shape[-1])
-        
+
         self.cell_fr_norm = np.ones(self.n) #value for initialization
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -1474,33 +1483,33 @@ class BoundaryVectorCells(VectorCells):
                 "BoundaryVectorCells (BVCs) successfully initialised. You can also manually set their orientation preferences (BVCs.tuning_angles, BVCs.sigma_angles), distance preferences (BVCs.tuning_distances, BVCs.sigma_distances)."
             )
         return
-    
+
 
 
     def get_state(self, evaluate_at="agent", **kwargs):
         """
-        Here we implement the same type if boundary vector cells as de Cothi et al. (2020), 
+        Here we implement the same type if boundary vector cells as de Cothi et al. (2020),
         who follow Barry & Burgess, (2007). See equations there.
 
-        The way we do this is a little complex. We will describe how it works from a single position 
+        The way we do this is a little complex. We will describe how it works from a single position
         (but remember this can be called in a vectorised manner from an array of positons in parallel)
             1. An array of normalised "test vectors" span, in all directions at small increments, from the current position
             2. These define an array of line segments stretching from [pos, pos+test vector]
-            3. Where these line segments collide with all walls in the environment is established, 
+            3. Where these line segments collide with all walls in the environment is established,
                this uses the function "utils.vector_intercepts()"
-            4. This pays attention to only consider the first (closest) wall forawrd along a line segment. 
-               Walls behind other walls are "shaded" by closer walls. Its a little complex to do this and 
+            4. This pays attention to only consider the first (closest) wall forawrd along a line segment.
+               Walls behind other walls are "shaded" by closer walls. Its a little complex to do this and
                requires the function "boundary_vector_preference_function()"
-            5. Now that, for every test direction, the closest wall is established it is simple a process 
-               of finding the response of the neuron to that wall segment at that angle 
-               (multiple of two gaussians, see de Cothi (2020)) and then summing over all wall segments 
+            5. Now that, for every test direction, the closest wall is established it is simple a process
+               of finding the response of the neuron to that wall segment at that angle
+               (multiple of two gaussians, see de Cothi (2020)) and then summing over all wall segments
                for all test angles.
 
-        We also apply a check in the middle to utils.rotate the reference frame into that of the head direction 
+        We also apply a check in the middle to utils.rotate the reference frame into that of the head direction
         of the agent iff self.reference_frame='egocentric'.
 
-        By default position is taken from the Agent and used to calculate firing rates. This can also by passed 
-        directly (evaluate_at=None, pos=pass_array_of_positions) or you can use all the positions in the 
+        By default position is taken from the Agent and used to calculate firing rates. This can also by passed
+        directly (evaluate_at=None, pos=pass_array_of_positions) or you can use all the positions in the
         environment (evaluate_at="all").
         """
         if evaluate_at == "agent":
@@ -1607,13 +1616,13 @@ class BoundaryVectorCells(VectorCells):
         return firingrate
 
     def boundary_vector_preference_function(self, x):
-        """This is a random function needed to efficiently produce boundary vector cells. 
-        x is any array of final dimension shape shape[-1]=2. As I use it here x has the form of the 
-        output of utils.vector_intercepts. I.e. each point gives shape[-1]=2 lambda values (lam1,lam2) 
-        for where a pair of line segments intercept. This function gives a preference for each pair. 
-        
-        Preference is -1 if lam1<0 (the collision occurs behind the first point) and if lam2>1 or lam2<0 
-        (the collision occurs ahead of the first point but not on the second line segment). If neither of these 
+        """This is a random function needed to efficiently produce boundary vector cells.
+        x is any array of final dimension shape shape[-1]=2. As I use it here x has the form of the
+        output of utils.vector_intercepts. I.e. each point gives shape[-1]=2 lambda values (lam1,lam2)
+        for where a pair of line segments intercept. This function gives a preference for each pair.
+
+        Preference is -1 if lam1<0 (the collision occurs behind the first point) and if lam2>1 or lam2<0
+        (the collision occurs ahead of the first point but not on the second line segment). If neither of these
         are true it's 1/x (i.e. it prefers collisions which are closest).
 
         Args:
@@ -1648,13 +1657,13 @@ class BoundaryVectorCells(VectorCells):
         autosave=None,
     ):
         """
-        Plots the receptive field (in polar corrdinates) of the BVC cells. For allocentric BVCs 
+        Plots the receptive field (in polar corrdinates) of the BVC cells. For allocentric BVCs
         "up" in this plot == "East", for egocentric BVCs, up == the head direction of the animals
 
         Args:
             chosen_neurons: Which neurons to plot. Can be int, list, array or "all". Defaults to "all".
             fig, ax: the figure/ax object to plot onto (optional)
-            autosave (bool, optional): if True, will try to save the figure into `ratinabox.figure_directory`. 
+            autosave (bool, optional): if True, will try to save the figure into `ratinabox.figure_directory`.
                                     Defaults to None in which case looks for global constant ratinabox.autosave_plots
 
         Returns:
@@ -1714,20 +1723,20 @@ class FieldOfViewBVCs(BoundaryVectorCells):
     General FieldOfView cell description (also applies to FieldOfViewOVCs):
         A radial assembly of vector cells tiling the agents field of view (FoV) is created. Users define
         the extent of the FoV (distance_range nad angle_range) then concentric rows of egocentric cells
-        at increasing distances from the Agent are placed to tile this FoV. If a feature (object or boundary) 
+        at increasing distances from the Agent are placed to tile this FoV. If a feature (object or boundary)
         is located in the agents FoV then cells tiling this section of the FoV will fire. Each cell is roughly
         circular so its angular width (in meters at the corresponding radius) matches its radial width.
         The size of the receptive field either diverge with radius params["cell_arrangement"] = "diverging_manifold"
         (as observed in the brain, default here) or stay the same "uniform_manifold".
 
-        In order to visuale the assembly, we created a plotting function. First make a trajectory figure, 
+        In order to visuale the assembly, we created a plotting function. First make a trajectory figure,
         then pass this into the plotting func:
             >>> fig, ax = Ag.plot_trajectory()
             >>> fig, ax = my_FoVNeurons.display_vector_cells(fig, ax)
         or animate it with
             >>> fig, ax = Ag.animate_trajectory(additional_plot_func=my_FoVNeurons.display_vector_cells)
         (this plotting function lives in the vector cell parent class so actually non-field of view cells can be plotted like this too)
-        We have a demo showing how this works. 
+        We have a demo showing how this works.
     """
 
     default_params = {
@@ -1757,8 +1766,8 @@ class ObjectVectorCells(VectorCells):
     These are a subclass of VectorCells() which are selective to objects in the environment.
 
     By default cell tuning params are initialised randomly and are "allocentric" (see VectorCells doc string for more details). Which "type" of object these are selective for can be specified with the "object_tuning_type" param.
-    
-    OVCs can be arranged in an egocentric "field of view" (see FieldOfViewOVCs subclass). 
+
+    OVCs can be arranged in an egocentric "field of view" (see FieldOfViewOVCs subclass).
 
     List of functions:
         • get_state()
@@ -1769,7 +1778,7 @@ class ObjectVectorCells(VectorCells):
         "n": 10,
         "name": "ObjectVectorCell",
         "walls_occlude": True, #objects behind walls cannot be seen
-        "object_tuning_type" : "random", #can be "random", any integer, or a list of integers of length n. The tuning types of the OVCs. 
+        "object_tuning_type" : "random", #can be "random", any integer, or a list of integers of length n. The tuning types of the OVCs.
     }
 
     def __init__(self, Agent, params={}):
@@ -1814,8 +1823,8 @@ class ObjectVectorCells(VectorCells):
                 (OVCs.tuning_angles, OVCs.sigma_angles), distance preferences \
                 (OVCs.tuning_distances, OVCs.sigma_distances)."
             )
-        
-        
+
+
         return
 
 
@@ -1835,29 +1844,29 @@ class ObjectVectorCells(VectorCells):
                 tuning_types = np.repeat(tuning_types, self.n)
             elif isinstance(tuning_types, list):
                 tuning_types = np.array(tuning_types)
-            
+
             assert isinstance(tuning_types, np.ndarray), "tuning_types must be an integer, list or numpy array"
             assert tuning_types.shape[0] == self.n, f"Tuning types must be a vector of length of the number of neurons: ({self.n},)"
 
             self.tuning_types = tuning_types
 
 
-    
+
     def get_state(self, evaluate_at="agent", **kwargs):
         """Returns the firing rate of the ObjectVectorCells.
 
         The way we do this is a little complex. We will describe how it works from a single position to a single OVC
-        (but remember this can be called in a vectorised manner from an array of positons in parallel and there are 
+        (but remember this can be called in a vectorised manner from an array of positons in parallel and there are
         in principle multiple OVCs)
             1. A vector from the position to the object is calculated.
-            2. The bearing of this vector is calculated and its length. Note if self.reference_frame == "egocentric" 
+            2. The bearing of this vector is calculated and its length. Note if self.reference_frame == "egocentric"
                then the bearing is relative to the heading direction of the agent (along its current velocity), not true-north.
-            3. Since the distance to the object is calculated taking the environment into account if there is a wall 
+            3. Since the distance to the object is calculated taking the environment into account if there is a wall
                occluding the agent from the obvject this object will not fire.
             4. It is now simple to calculate the firing rate of the cell. Each OVC has a preferred distance and angle
                away from it which cause it to fire. Its a multiple of a gaussian (distance) and von mises (for angle) which creates the eventual firing rate.
 
-        By default position is taken from the Agent and used to calculate firing rates. This can also by passed directly 
+        By default position is taken from the Agent and used to calculate firing rates. This can also by passed directly
         (evaluate_at=None, pos=pass_array_of_positions) or you can use all the positions in the environment (evaluate_at="all").
 
         Returns:
@@ -1882,7 +1891,7 @@ class ObjectVectorCells(VectorCells):
             # no objects in the environment
             return np.zeros((N_cells, N_pos))
 
-        # 1. GET VECTORS FROM POSITIONS TO OBJECTS 
+        # 1. GET VECTORS FROM POSITIONS TO OBJECTS
         (
             distances_to_objects,
             vectors_to_objects,
@@ -1894,13 +1903,13 @@ class ObjectVectorCells(VectorCells):
         )  # (N_pos,N_objects) (N_pos,N_objects,2)
         flattened_vectors_to_objects = -1 * vectors_to_objects.reshape(
             -1, 2
-        )  # (N_pos x N_objects, 2) #vectors go from pos2 to pos1 so must multiply by -1 
+        )  # (N_pos x N_objects, 2) #vectors go from pos2 to pos1 so must multiply by -1
         # flatten is just for the get angle API, reshaping it later
         bearings_to_objects = (
             utils.get_angle(flattened_vectors_to_objects, is_array=True).reshape(
                 N_pos, N_objects
             )
-        )  # (N_pos,N_objects) 
+        )  # (N_pos,N_objects)
 
         # 2. ACCOUNT FOR HEAD DIRECTION IF EGOCENTRIC. THEN CALCULATE BEARINGS TO OBJECTS
         if self.reference_frame == "egocentric":
@@ -1920,7 +1929,7 @@ class ObjectVectorCells(VectorCells):
             head_bearing = utils.get_angle(head_direction)
             bearings_to_objects -= head_bearing  # account for head direction
 
-        # 3. COLLECT TUNING DETAILS OF EACH CELL AND PUT IN THE RIGHT SHAPE 
+        # 3. COLLECT TUNING DETAILS OF EACH CELL AND PUT IN THE RIGHT SHAPE
         tuning_distances = np.tile(
             np.expand_dims(np.expand_dims(self.tuning_distances, axis=0), axis=0),
             reps=(N_pos, N_objects, 1),
@@ -1963,7 +1972,7 @@ class ObjectVectorCells(VectorCells):
         firingrate *= tuning_mask
         firingrate = np.sum(
             firingrate, axis=1
-        ).T  # (N_cell,N_pos), sum over objects which this cell is selective to #TODO: a single cell can fire with 2 types of objects 
+        ).T  # (N_cell,N_pos), sum over objects which this cell is selective to #TODO: a single cell can fire with 2 types of objects
         firingrate = (
             firingrate * (self.max_fr - self.min_fr) + self.min_fr
         )  # scales from being between [0,1] to [min_fr, max_fr]
@@ -1977,8 +1986,8 @@ class FieldOfViewOVCs(ObjectVectorCells):
 
     General FieldOfView cell description (also applies to FieldOfViewOVCs):
         Please see fieldOfViewBVCs doc string
-    
-    Users should specify the object type they are selective for with the "object_tuning_type" parameter. 
+
+    Users should specify the object type they are selective for with the "object_tuning_type" parameter.
     """
 
     default_params = {
@@ -2013,7 +2022,7 @@ class AgentVectorCells(VectorCells):
     By default cell tuning params are initialised randomly and are "allocentric" (see VectorCells doc string for more details).
     This is one of the few riab classes which takes another agent as an argument. This is the agent which the cells are selective for. It must be passed as the second argument to the constructor, "Other_Agent".
 
-    AVCs can be arranged in an egocentric "field of view" (see FieldOfViewAVCs subclass). 
+    AVCs can be arranged in an egocentric "field of view" (see FieldOfViewAVCs subclass).
 
     List of functions:
         • get_state()
@@ -2025,7 +2034,7 @@ class AgentVectorCells(VectorCells):
         "walls_occlude": True, #objects behind walls cannot be seen
     }
 
-    def __init__(self, 
+    def __init__(self,
                  Agent,
                  Other_Agent = None, #this must be another riab Agent object
                  params={}):
@@ -2036,7 +2045,7 @@ class AgentVectorCells(VectorCells):
 
         super().__init__(Agent, self.params)
 
-        # have a list to detect which agent will the cell detect 
+        # have a list to detect which agent will the cell detect
         self.tuning_type_agent = Other_Agent
 
         if self.walls_occlude == True:
@@ -2045,31 +2054,31 @@ class AgentVectorCells(VectorCells):
             self.wall_geometry = "euclidean"
 
         # list of colors for each cell, just used by `.display_vector_cells()` plotting function
-        color = np.array(matplotlib.colors.to_rgba(f"C{self.tuning_type_agent.agent_idx}")).reshape(1,-1) #TODO: colours 
+        color = np.array(matplotlib.colors.to_rgba(f"C{self.tuning_type_agent.agent_idx}")).reshape(1,-1) #TODO: colours
         self.cell_colors = np.repeat(color, self.n, axis=0)
 
         if ratinabox.verbose is True:
             print(
                 "AgentVectorCells (OVCs) successfully initialised."
             )
-        
+
         return
 
     def get_state(self, evaluate_at="agent", **kwargs):
         """Returns the firing rate of the AgentVectorCells.
 
         The way we do this is a little complex. We will describe how it works from a single position to a single VC
-        (but remember this can be called in a vectorised manner from an array of positons in parallel and there are 
+        (but remember this can be called in a vectorised manner from an array of positons in parallel and there are
         in principle multiple VCs)
             1. A vector from the position to the agent is calculated.
-            2. The bearing of this vector is calculated and its length. Note if self.reference_frame == "egocentric" 
+            2. The bearing of this vector is calculated and its length. Note if self.reference_frame == "egocentric"
                then the bearing is relative to the heading direction of the agent (along its current velocity), not true-north.
-            3. Since the distance to the object is calculated taking the environment into account if there is a wall 
+            3. Since the distance to the object is calculated taking the environment into account if there is a wall
                occluding the agent from the obvject this object will not fire.
             4. It is now simple to calculate the firing rate of the cell. Each OVC has a preferred distance and angle
                away from it which cause it to fire. Its a multiple of a gaussian (distance) and von mises (for angle) which creates the eventual firing rate.
 
-        By default position is taken from the Agent and used to calculate firing rates. This can also by passed directly 
+        By default position is taken from the Agent and used to calculate firing rates. This can also by passed directly
         (evaluate_at=None, pos=pass_array_of_positions) or you can use all the positions in the environment (evaluate_at="all").
 
         Returns:
@@ -2093,7 +2102,7 @@ class AgentVectorCells(VectorCells):
         N_cells = self.n
         N_objects = 1
 
-        # 1. GET VECTORS FROM POSITIONS TO OBJECTS 
+        # 1. GET VECTORS FROM POSITIONS TO OBJECTS
         (
             distances_to_other_agent, # (N_pos,N_objects)
             vectors_to_agents, # (N_pos,N_objects,2)
@@ -2102,16 +2111,16 @@ class AgentVectorCells(VectorCells):
             agent_location,
             return_vectors=True,
             wall_geometry=self.wall_geometry,
-        )  
+        )
         flattened_vectors_to_objects = -1 * vectors_to_agents.reshape(
             -1, 2
-        )  # (N_pos x N_objects, 2) #vectors go from pos2 to pos1 so must multiply by -1 
+        )  # (N_pos x N_objects, 2) #vectors go from pos2 to pos1 so must multiply by -1
         # flatten is just for the get angle API, reshaping it later
         bearings_to_objects = (
             utils.get_angle(flattened_vectors_to_objects, is_array=True).reshape(
                 N_pos, N_objects
             )
-        )  # (N_pos,N_objects) 
+        )  # (N_pos,N_objects)
 
         # 2. ACCOUNT FOR HEAD DIRECTION IF EGOCENTRIC. THEN CALCULATE BEARINGS TO OBJECTS
         if self.reference_frame == "egocentric":
@@ -2131,7 +2140,7 @@ class AgentVectorCells(VectorCells):
             head_bearing = utils.get_angle(head_direction)
             bearings_to_objects -= head_bearing  # account for head direction
 
-        # 3. COLLECT TUNING DETAILS OF EACH CELL AND PUT IN THE RIGHT SHAPE 
+        # 3. COLLECT TUNING DETAILS OF EACH CELL AND PUT IN THE RIGHT SHAPE
         tuning_distances = np.tile(
             np.expand_dims(np.expand_dims(self.tuning_distances, axis=0), axis=0),
             reps=(N_pos, N_objects, 1),
@@ -2167,7 +2176,7 @@ class AgentVectorCells(VectorCells):
 
         firingrate = np.sum(
             firingrate, axis=1
-        ).T  # (N_cell,N_pos), sum over objects which this cell is selective to #TODO: a single cell can fire with 2 types of objects 
+        ).T  # (N_cell,N_pos), sum over objects which this cell is selective to #TODO: a single cell can fire with 2 types of objects
         firingrate = (
             firingrate * (self.max_fr - self.min_fr) + self.min_fr
         )  # scales from being between [0,1] to [min_fr, max_fr]
@@ -2180,8 +2189,8 @@ class FieldOfViewAVCs(AgentVectorCells):
 
     General FieldOfView cell description (also applies to FieldOfViewOVCs and BVCs):
         Please see FieldOfViewBVCs doc string
-    
-    Users should specify the agent type they are selective for with the "Other_Agent" argument. 
+
+    Users should specify the agent type they are selective for with the "Other_Agent" argument.
     """
 
     default_params = {
@@ -2205,19 +2214,19 @@ class FieldOfViewAVCs(AgentVectorCells):
         super().__init__(Agent,Other_Agent,self.params)
 
 
-    
 
-      
+
+
 class HeadDirectionCells(Neurons):
-    """The HeadDirectionCells class defines a population of head direction cells. This class is a subclass of Neurons() 
+    """The HeadDirectionCells class defines a population of head direction cells. This class is a subclass of Neurons()
     and inherits it properties/plotting functions.
 
     Must be initialised with an Agent and a 'params' dictionary.
 
-    HeadDirectionCells defines a set of 'n' head direction cells. Each cell has a preffered direction/angle 
-    (default evenly spaced across unit circle). In 1D there are always only n=2 cells preffering left and right directions. 
-    The firing rates are scaled such that when agent travels exactly along the preferred direction the firing rate of that 
-    cell is the max_fr. The firing field of a cell is a von mises centred around its preferred direction of default 
+    HeadDirectionCells defines a set of 'n' head direction cells. Each cell has a preffered direction/angle
+    (default evenly spaced across unit circle). In 1D there are always only n=2 cells preffering left and right directions.
+    The firing rates are scaled such that when agent travels exactly along the preferred direction the firing rate of that
+    cell is the max_fr. The firing field of a cell is a von mises centred around its preferred direction of default
     width 30 degrees (can be changed with parameter params["angular_spread_degrees"])
 
     To print/set preffered direction: self.preferred_angles
@@ -2244,7 +2253,7 @@ class HeadDirectionCells(Neurons):
 
     def __init__(self, Agent, params={}):
         """
-        Initialise HeadDirectionCells(), takes as input a parameter dictionary. Any values not provided by the 
+        Initialise HeadDirectionCells(), takes as input a parameter dictionary. Any values not provided by the
         params dictionary are taken from a default dictionary below.
         Args:
             params (dict, optional). Defaults to {}."""
@@ -2271,13 +2280,13 @@ class HeadDirectionCells(Neurons):
             )
 
     def get_state(self, evaluate_at="agent", use_velocity=False, **kwargs):
-        """In 2D n head direction cells encode the head direction of the animal. By default velocity 
+        """In 2D n head direction cells encode the head direction of the animal. By default velocity
         (which determines head direction) is taken from the agent but this can also be passed as a kwarg 'head_direction'
-        
+
         If use_velocity is True, will use the normalised velocity of the agent instead of the head direction. In this instance uset he kwarg "velocity" to manually passin a velocity vector."""
-        
+
         #Head direction uses actual head direction of agent
-        if use_velocity is False: 
+        if use_velocity is False:
             if evaluate_at == "agent":
                 direction = self.Agent.head_direction
             elif "head_direction" in kwargs.keys(): #overrides "agent" hd if provided
@@ -2310,7 +2319,7 @@ class HeadDirectionCells(Neurons):
                     print("[1] as default",end="")
                 print("Recommended to pass one in the 'velocity' argument of get_state()")
             direction = vel / np.linalg.norm(vel)
-        
+
         if self.Agent.Environment.dimensionality == "1D":
             hdleft_fr = max(0, np.sign(direction[0]))
             hdright_fr = max(0, -np.sign(direction[0]))
@@ -2336,19 +2345,19 @@ class HeadDirectionCells(Neurons):
 
         return firingrate
 
-                         
-            
-        
+
+
+
     def plot_HDC_receptive_field(
         self, chosen_neurons="all", fig=None, ax=None, autosave=None
     ):
-        """Plots the receptive fields, in polar coordinates, of hte head direction cells. The receptive field 
+        """Plots the receptive fields, in polar coordinates, of hte head direction cells. The receptive field
         is a von mises function centred around the preferred direction of the cell. Note this only differs from the global `Neurons.plot_angular_rate_map()` function in that it analytically plots a von mises, rather than numerically averaging over positions for various head directions.
 
         Args:
             chosen_neurons (str, optional): The neurons to plot. Defaults to "all".
             fig, ax (_type_, optional): matplotlib fig, ax objects ot plot onto (optional).
-            autosave (bool, optional): if True, will try to save the figure into `ratinabox.figure_directory`. 
+            autosave (bool, optional): if True, will try to save the figure into `ratinabox.figure_directory`.
                                        Defaults to None in which case looks for global constant ratinabox.autosave_plots
 
         Returns:
@@ -2515,8 +2524,8 @@ class FeedForwardLayer(Neurons):
         ...
     One set of biases are stored in self.biases (defaulting to an array of zeros), one for each neuron.
 
-    
-    The activation function defaults to linear but can be set with the "activation_function" parameter. Users have two options: 
+
+    The activation function defaults to linear but can be set with the "activation_function" parameter. Users have two options:
         • PREMADE (default): if a dictionary is passed this must contain parameters for the RatInABox premade activation functions stored in utils.activate(), one key in the dictionary is always "activation" from specifying the function-type whilst the other keys should give parameters of the activation function. For example:
             • {"activation":"linear", } #no additional params, DEFAULT
             • {"activation":"sigmoid", "max_fr":1, "min_fr":0, "mid_x":1, "width":2}
@@ -2524,13 +2533,13 @@ class FeedForwardLayer(Neurons):
             • {"activation":"tanh", "gain":1, "threshold":0}
             • {"activation":"retanh", "gain":1, "threshold":0}
             • {"activation":"softmax", "gain":1, "threshold":0}
-        • BESPOKE: Users can pass their own handmade activation function, it must be vectorised and of the following format: 
+        • BESPOKE: Users can pass their own handmade activation function, it must be vectorised and of the following format:
             activation_func(x, deriv=False):
-                if deriv == False: 
+                if deriv == False:
                     return φ(x)
                 elif deriv == True:
                     return φ'(x)
-    
+
     Check that the input layers are all named differently.
     List of functions:
         • get_state()
@@ -2539,7 +2548,7 @@ class FeedForwardLayer(Neurons):
     default_params = {
             "n": 10,
             "input_layers": [],  # a list of input layers, or add one by one using self.adD_inout
-            "activation_function": {"activation": "linear",}, 
+            "activation_function": {"activation": "linear",},
             "name": "FeedForwardLayer",
         }
     """
@@ -2562,7 +2571,7 @@ class FeedForwardLayer(Neurons):
         if "activation_params" in self.params.keys():
             warnings.warn("The parameter 'activation_params' is deprecated. Use 'activation_function' instead.")
             self.params["activation_function"] = self.params["activation_params"]
-    
+
         super().__init__(Agent, self.params)
 
         assert isinstance(
@@ -2577,10 +2586,10 @@ class FeedForwardLayer(Neurons):
         if isinstance(self.activation_function, dict):
             other_args = copy.deepcopy(self.activation_function)
             activation = other_args['activation']
-            #This is a wrapper on utils.activate to set activation and other_args arguments and then return a function which can be called like self.activation_function(x, deriv) 
+            #This is a wrapper on utils.activate to set activation and other_args arguments and then return a function which can be called like self.activation_function(x, deriv)
             def lambda_activation_function(activation, other_args):
-                #Here x and deriv don't matter as they are 
-                return lambda x, deriv: utils.activate(x, activation, deriv, other_args) 
+                #Here x and deriv don't matter as they are
+                return lambda x, deriv: utils.activate(x, activation, deriv, other_args)
             #Now make the callable function
             self.activation_function = lambda x, deriv : utils.activate(x, activation, deriv, other_args)
         else:
@@ -2648,7 +2657,7 @@ class FeedForwardLayer(Neurons):
 
         Args:
             evaluate_at (str, optional). Defaults to 'last'.
-            max_recurrence: The maximum number of time get_state() recursively calls recurrent inputs (prevents infinite recursion error).  
+            max_recurrence: The maximum number of time get_state() recursively calls recurrent inputs (prevents infinite recursion error).
             **kwargs: any extra kwargs will get passed to the input layer get_state() call for evaluation.
         Returns:
             firingrate: array of firing rates
@@ -2698,8 +2707,8 @@ class FeedForwardLayer(Neurons):
     def plot_rate_map(self, method="groundtruth", max_recurrence=None, **kwargs):
         """
         If groundtruth rate maps are plotted, then a maximum recursion depth is passed.
-        
-        max_recurrence: The maximum number of time get_state() recursively calls recurrent inputs (prevents infinite recursion error).  
+
+        max_recurrence: The maximum number of time get_state() recursively calls recurrent inputs (prevents infinite recursion error).
         """
 
         if method.startswith("groundtruth"):
@@ -2711,17 +2720,17 @@ class FeedForwardLayer(Neurons):
 
 
 class RandomSpatialNeurons(Neurons):
-    """This RandomSpatialNeurons class defines a population of Neurons with smooth random spatial tunings. 
-    
+    """This RandomSpatialNeurons class defines a population of Neurons with smooth random spatial tunings.
+
     The model is non-parameteric: for each neuron a smooth random function is sampled from a prior (a Gaussian process) over smooth random functions with the desired lengthscale. For a deeper understanding we recommend reading David Mackay's textbook chapter 45. Note that to be well defined over the whole domain we must sample locations _at least_ as densely than the lengthscale, so this simulation slows down for small lengthscales < 0.05. The covariance function is a squared exponential kernel and the output is passed through a sigmoid to scale it between max_fr and min_fr.
 
     We envisage this Neuron being used to support modelling efforts where the spatial tuning of neurons is not known or where you require spatially tuned feautres but don't want to assume place cells, grid cells etc.
 
     List of functions:
-        • kernel() 
+        • kernel()
     """
-    default_params = {'lengthscale':0.1, #lengthscale of the random function 
-                      'max_fr':1, #maximum firing rate 
+    default_params = {'lengthscale':0.1, #lengthscale of the random function
+                      'max_fr':1, #maximum firing rate
                       'min_fr':0, #minimum firing rate
                       'n':10, #number of neurons
                       'wall_geometry':'geodesic', #how to account for walls when calculating distance between points (only relevant in 2D)
@@ -2730,7 +2739,7 @@ class RandomSpatialNeurons(Neurons):
 
     def __init__(self, Agent, params={}):
         """Initialise the RandomSpatialNeurons class. Takes an Agent object and a dictionary of parameters which defaults to the default_parametets dictionary."""
-        
+
         self.params = copy.deepcopy(__class__.default_params)
         self.params.update(params)
         super().__init__(Agent, params)
@@ -2744,10 +2753,10 @@ class RandomSpatialNeurons(Neurons):
         # We densely sample locations across the environment and then distance covariance matrix using a squared exponential kernel. Using this covariance we sample targets   (according to an exponential because it is way too expensive to use the default dx=0.01 we have to initially create a lower resolution array of poionts. We will sample from the prior over these points and then, for any other points, "infer" the firing rate from these samples. For all other points we'll take the mean of the posterior based on these samples.
 
         assert self.lengthscale >= 0.02, "lengthscale must be greater than 0.02 m"
-        self.X = self.Agent.Environment.discretise_environment(dx=min(0.05,self.lengthscale)) 
+        self.X = self.Agent.Environment.discretise_environment(dx=min(0.05,self.lengthscale))
         self.X = self.X.reshape(-1, self.X.shape[-1])
         self.Q = self.kernel(self.X, self.X)
-        # If doing full Bayes: Diagonalise and add a small amount of noise to the diagonal to ensure invertibility (if doing full Bayes) then precalculate some inverses 
+        # If doing full Bayes: Diagonalise and add a small amount of noise to the diagonal to ensure invertibility (if doing full Bayes) then precalculate some inverses
         # self.Q = 0.5 * (self.Q + self.Q.T)
         # self.Q += 1e-6*np.eye(n_samples)
         #self.Qinv_on_target = self.Qinv @ self.targets
@@ -2759,11 +2768,11 @@ class RandomSpatialNeurons(Neurons):
         warnings.filterwarnings("default", category=RuntimeWarning)
         self.targets = ratinabox.utils.activate(self.targets, activation="sigmoid",
                                                 other_args = {"max_fr": self.max_fr, "min_fr": self.min_fr, "mid_x": 0, "width_x": 2}) # activation function
-        return 
+        return
 
     def get_state(self, evaluate_at="agent", **kwargs):
         """At inference time any position in the Environment can be queried and its firing rate will be returned. This is done by taking the mean of the targets weights by how close those targets are to the position (as measured by the covariance) - we note that this isn't the "full" Bayesian way to estimate the posterior of unseen points but since we have densely samples target locations it should be good enough. The full Bayesian way (Mackay Eqn. 45.42) is provided but commented out for now due to instabilities when there are additional walls.
-        
+
         By default position is taken from the Agent and used to calculate firinf rates. This can also by passed directly (evaluate_at=None, pos=pass_array_of_positions) or ou can use all the positions in the environment (evaluate_at="all").
 
         Returns:
@@ -2778,24 +2787,24 @@ class RandomSpatialNeurons(Neurons):
         k = self.kernel(pos, self.X)
 
         #this is the "poorman's" way of doing this. It just uses the kernel values to weights the target values and sets the firing rate to their mean. Since our targets have been estimated quite densely this is a good approximation the full Bayesian way given below but, for numerical reasons, is unstable in environments with lots of walls.
-        #LOCAL AVERAGE OF TARGETS 
+        #LOCAL AVERAGE OF TARGETS
         k = k / np.sum(k, axis=1, keepdims=True)
         mean = k @ self.targets
 
-        #FULL BAYES (UNSTABLE WITH WALLS) 
+        #FULL BAYES (UNSTABLE WITH WALLS)
         # mean = k @ self.Qinv_on_target
-        # return k 
-        firingrate = mean.T 
+        # return k
+        firingrate = mean.T
         return firingrate
-    
+
 
     def kernel(self, x1, x2):
-        """Returns the covariance matrix of shape (len(x1),len(x2)) between all locations in lists x1 and x2. For now this is just the squared exponential kernel where the "distance" between two points is the "environmental distance" (this may account for any walls etc.). In future we may consider adding more types of kernels. 
-        Args: 
+        """Returns the covariance matrix of shape (len(x1),len(x2)) between all locations in lists x1 and x2. For now this is just the squared exponential kernel where the "distance" between two points is the "environmental distance" (this may account for any walls etc.). In future we may consider adding more types of kernels.
+        Args:
             x1: (N1, D) array of N1 points in D dimensions
             x2: (N2, D) array of N2 points in D dimensions
         Returns:
-            (N1, N2) kernel between all points in x1 and all points in x2 
+            (N1, N2) kernel between all points in x1 and all points in x2
         """
         d_mat = self.Agent.Environment.get_distances_between___accounting_for_environment(x1,x2,wall_geometry=self.wall_geometry)
         kernel_matrix = np.exp(-(d_mat**2)/(2*self.lengthscale**2))
