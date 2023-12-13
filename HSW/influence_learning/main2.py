@@ -6,7 +6,6 @@ import scipy.io
 import scipy.stats as stats
 from envA_rectangle2 import simulate_envA
 from envB_oval2 import simulate_envB
-from CombinedPlaceTebcNeurons2 import CombinedPlaceTebcNeurons
 from trial_marker2 import determine_cs_us
 from learningTransfer2 import assess_learning_transfer
 from actualVexpected2 import compare_actual_expected_firing
@@ -22,6 +21,7 @@ from cond_decoding_AvsB import cond_decoding_AvsB
 from cebra import CEBRA
 import cProfile
 import pstats
+import random
 
 
 
@@ -41,7 +41,8 @@ For cebra in env:
     pip install cebra
 
 
-
+          - adjust the BALANCE PARAMETER to adjust how much each cell incorporates spatial vs tEBC data
+          - adjust responsive_values that specifies the percentage of neurons that are responsive to tEBC signals.
 
 Usage:
     python main.py [--balance_values BALANCE_VALUES] [--balance_dist BALANCE_DIST] [--balance_std BALANCE_STD]
@@ -54,6 +55,8 @@ Arguments:
     --balance_dist    : Specifies the type of distribution for the balance factor.
                         Options are 'fixed' and 'gaussian'.
                         Default is 'fixed'.
+                        Additional options is 'additive' wherein place and  tebc get cumulatily added. this only makes
+                        sense with a balace value of 1
     --balance_std     : Standard deviation for the Gaussian distribution of the balance factor.
                         Only used if --balance_dist is set to 'gaussian'.
                         Default value is 0.1.
@@ -63,19 +66,20 @@ Arguments:
     --responsive_type : Type of distribution for the responsive rate.
                         Options are 'fixed', 'binomial', 'normal', 'poisson'.
                         Default is 'fixed'.
+    --percent_place_cells: what percent of place cells you want
 
 Examples:
-    python main2.py --balance_values 0.3,0.5,0.7 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4,0.6,0.8 --responsive_type binomial
+    python main2.py --balance_values 0.3,0.5,0.7 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4,0.6,0.8 --responsive_type binomial --percent_place_cells .7
 
-    python main2.py --balance_values 0.3,0.5 --balance_dist gaussian --balance_std 0.5 --responsive_values 0.4,0.6 --responsive_type binomial
+    python main2.py --balance_values 0.3,0.5 --balance_dist gaussian --balance_std 0.5 --responsive_values 0.4,0.6 --responsive_type binomial --percent_place_cells .7
 
-    python main2.py --balance_values 0.3 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4 --responsive_type binomial
+    python main2.py --balance_values 0.3 --balance_dist gaussian --balance_std 0.1 --responsive_values 0.4 --responsive_type binomial --percent_place_cells .7
 
-    python main2.py --balance_values 0.5 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed
+    python main2.py --balance_values 0.5 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7
 
-    python main2.py --balance_values 0.5,0.7 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed
+    python main2.py --balance_values 0.5,0.7 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7
 
-    python main2.py --balance_values 0,.25,.5,.75,1 --balance_dist fixed --responsive_values .25,.5,.75,1 --responsive_type fixed
+    python main2.py --balance_values 0,.25,.5,.75,1 --balance_dist fixed --responsive_values .25,.5,.75,1 --responsive_type fixed --percent_place_cells 1,.85,.7,.55
 
 
 Description:
@@ -89,47 +93,44 @@ Requirements:
     - Adjust environment settings and neuron parameters as needed in the script.
 """
 
-save_directory='/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/results'
-ratinabox.figure_directory = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/results'
-# Create the directory if it doesn't exist
+# Function to process the list-like arguments
+def parse_list(arg_value):
+    if ',' in arg_value:
+        return [float(item) for item in arg_value.split(',')]
+    else:
+        return float(arg_value)
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description='Simulation Script for Neuronal Firing Rate Analysis')
+parser.add_argument('--balance_values', type=str, help='List of balance values or means for Gaussian distribution')
+parser.add_argument('--balance_dist', choices=['fixed', 'gaussian', 'additive'], default='fixed', help='Distribution type for balance')
+parser.add_argument('--balance_std', type=float, default=0.1, help='Standard deviation for Gaussian balance distribution')
+parser.add_argument('--responsive_values', type=str, help='List of responsive rates or probabilities for distributions')
+parser.add_argument('--responsive_type', choices=['fixed', 'binomial', 'normal', 'poisson'], default='fixed', help='Type of distribution for responsive rate')
+parser.add_argument('--percent_place_cells', type=str, required=True, help='Percentage of place cells (single value or comma-separated list)')
+args = parser.parse_args()
+
+# Process the arguments
+#balance_values = args.balance_values if args.balance_values else [0.5]
+#responsive_values = args.responsive_values if args.responsive_values else [0.5]
+balance_values = parse_list(args.balance_values)
+responsive_values = parse_list(args.responsive_values)
+percent_place_cells_values = parse_list(args.percent_place_cells)
+
+
+save_directory = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/results'
+ratinabox.figure_directory = save_directory
 os.makedirs(save_directory, exist_ok=True)
 
-#naming our file
-parser = argparse.ArgumentParser()
-parser.add_argument('--balance_values', type=str, required=True)
-parser.add_argument('--balance_dist', type=str, required=True)
-parser.add_argument('--balance_std', type=float, required=False)
-parser.add_argument('--responsive_values', type=str, required=True)
-parser.add_argument('--responsive_type', type=str, required=True)
-# Parse the arguments
-args = parser.parse_args()
-# Function to process the list-like arguments
-def process_list_arg(arg):
-    return ','.join(arg.split(','))
-# Process the balance_values and responsive_values
-balance_values_str = process_list_arg(args.balance_values)
-responsive_values_str = process_list_arg(args.responsive_values)
 # Construct the filename
-results_filename = f"grid_search_results-balance-{balance_values_str}-{args.balance_dist}-std-{args.balance_std}-response-{responsive_values_str}-{args.responsive_type}.txt"
+results_filename = f"grid_search_results-balance-{args.balance_values}-{args.balance_dist}-std-{args.balance_std}-response-{args.responsive_values}-{args.responsive_type}-PCs-{args.percent_place_cells}.txt"
 results_filepath = os.path.join(save_directory, results_filename)
-
-
 
 def parse_list(arg_value):
     if isinstance(arg_value, list):
         return [float(item) for item in arg_value]
     else:
         return [float(item) for item in arg_value.split(',')]
-
-
-# Parse command-line arguments
-parser = argparse.ArgumentParser(description='Simulation Script for Neuronal Firing Rate Analysis')
-parser.add_argument('--balance_values', type=parse_list, help='List of balance values or means for Gaussian distribution')
-parser.add_argument('--balance_dist', choices=['fixed', 'gaussian'], default='fixed', help='Distribution type for balance')
-parser.add_argument('--balance_std', type=float, default=0.1, help='Standard deviation for Gaussian balance distribution')
-parser.add_argument('--responsive_values', type=parse_list, help='List of responsive rates or probabilities for distributions')
-parser.add_argument('--responsive_type', choices=['fixed', 'binomial', 'normal', 'poisson'], default='fixed', help='Type of distribution for responsive rate')
-args = parser.parse_args()
 
 
 def get_distribution_values(dist_type, params, size):
@@ -147,6 +148,11 @@ def get_distribution_values(dist_type, params, size):
     elif dist_type == 'poisson':
         lam = params[0]
         return np.clip(stats.poisson(lam).rvs(size=size), 0, 1)
+    elif dist_type == 'additive':
+        return np.full(size, 100)
+
+
+
 
 # Load MATLAB file and extract position data
 matlab_file_path = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'  # Replace with your MATLAB file path
@@ -187,6 +193,7 @@ envB = Environment(params=envB_params)
 num_neurons = 80
 balance_values = parse_list(args.balance_values) if args.balance_values else [0.5]
 responsive_values = parse_list(args.responsive_values) if args.responsive_values else [0.5]
+percent_place_cells = parse_list(args.percent_place_cells) if args.percent_place_cells else [0.7]
 
 
 balance_zero_done = False
@@ -210,8 +217,13 @@ agentB.import_trajectory(times=unique_times, positions=unique_positions)
 
 # Perform grid search over balance and responsive rates
 with open(results_filepath, "w") as results_file:
-    for balance_value, responsive_val in itertools.product(balance_values, responsive_values):
+    for balance_value, responsive_val, percent_place_cell in itertools.product(balance_values, responsive_values, percent_place_cells):
+        # Use balance_value, responsive_val, and percent_place_cell in your simulation
         # Skip redundant zero value iterations
+        print(balance_value)
+        print(responsive_val)
+        print(percent_place_cell)
+
         if balance_value == 0:
             if balance_zero_done and len(balance_values) > 1:
                 continue
@@ -229,20 +241,20 @@ with open(results_filepath, "w") as results_file:
         tebc_responsive_neurons, cell_types = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
 
         # Profile the function
-        cProfile.runctx('simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)', globals(), locals(), 'profile_stats.prof')
-        p = pstats.Stats('profile_stats.prof')
-        p.sort_stats('cumulative').print_stats(10)
+        #cProfile.runctx('simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)', globals(), locals(), 'profile_stats.prof')
+        #p = pstats.Stats('profile_stats.prof')
+        #p.sort_stats('cumulative').print_stats(10)
 
         # Now run the function normally to capture its output
-        eyeblink_neurons, response_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)
+        spikesA, eyeblink_neuronsA, response_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values, cell_types)
+        # also want a percent of place cells metric
 
 
-
-        balance_distribution_envA = eyeblink_neurons.balance_distribution
-        tebc_responsive_rates_envA = eyeblink_neurons.tebc_responsive_neurons
+        balance_distribution_envA = eyeblink_neuronsA.balance_distribution
+        tebc_responsive_rates_envA = eyeblink_neuronsA.tebc_responsive_neurons
 
         # Simulate in Environment B using the parameters from Environment A
-        #response_envB, agentB, combined_neuronsB = simulate_envB(agentB, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, cell_types)
+        spikesB, eyeblink_neuronsB, response_envB, agentB = simulate_envB(agentB, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, percent_place_cells_values, cell_types)
 
 
 
@@ -272,22 +284,22 @@ with open(results_filepath, "w") as results_file:
 
         #####save
         # Construct the full file paths
-        filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
-        filename_envB = f"response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}.npy"
+        filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
+        filename_envB = f"response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
         full_path_envA = os.path.join(save_directory, filename_envA)
         full_path_envB = os.path.join(save_directory, filename_envB)
         # Save the response arrays to files
 
 
-        np.save(full_path_envA, response_envA)
-        '''
-        np.save(full_path_envB, combined_neuronsB.history['firingrate'])
+        np.save(full_path_envA, spikesA)
+
+        np.save(full_path_envB, spikesB)
         ######
 
         # Assess learning transfer and other metrics
         #organize to run in cebra
-        response_envA = np.transpose(response_envA)
-        response_envB = np.transpose(response_envB)
+        response_envA = np.transpose(spikesA)
+        response_envB = np.transpose(spikesB)
 
 
         envA_eyeblink = position_data_envA[3].T
@@ -305,9 +317,9 @@ with open(results_filepath, "w") as results_file:
         fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA, envA_eyeblink, response_envB, envB_eyeblink)
 
         # Construct the identifier for this iteration
-        identifier = f"{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}"
+        identifier = f"{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_PCs_{args.percent_place_cells}.npy"
 
-        # Append the results to the file
+        #Append the results to the file
         results_file.write(f"Parameters: {identifier}\n")
         results_file.write(f"fract_control_all: {fract_control_all}\n")
         results_file.write(f"fract_test_all: {fract_test_all}\n")
@@ -315,5 +327,5 @@ with open(results_filepath, "w") as results_file:
 
 
         # Print confirmation
-        '''
+
         print(f"Saved results to {full_path_envA} and {full_path_envB}")

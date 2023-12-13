@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import random
 from ratinabox.Neurons import Neurons, PlaceCells
 from tebc_response2 import response_profiles
 
@@ -62,7 +63,7 @@ class TEBC(PlaceCells):
         xpos = position_data[1, :]    # X positions
         ypos = position_data[2, :]    # Y positions
 
-        vel_vector = []
+        vel_vector = [0]
         s = len(times)
 
         for i in range(1, s - 1):
@@ -71,8 +72,10 @@ class TEBC(PlaceCells):
                 vel = hypo / (times[i + 1] - times[i - 1])
                 vel_vector.append(vel)
 
+        vel_vector[0] = vel_vector[1]
+        vel_vector.append(vel_vector[-1])
         # Smooth the velocity data
-        window_size = 15
+        window_size = 7
         self.smoothed_velocity = pd.Series(vel_vector).rolling(window=window_size, min_periods=1, center=True).mean().tolist()
 
 
@@ -89,8 +92,11 @@ class TEBC(PlaceCells):
                 tebc_response = response_func(time_since_CS)
 
 
-            self.firing_rates[i] = (self.balance_distribution[i] * tebc_response)
-        #    print("rate")
+            if self.balance_distribution[0] == 100:
+                self.firing_rates[i] = tebc_response
+            else:
+                self.firing_rates[i] = (self.balance_distribution[i] * tebc_response)
+
 
         self.save_to_history()
         return self.firing_rates
@@ -105,9 +111,15 @@ class TEBC(PlaceCells):
                 response_func = response_profiles[cell_type]['response_func']
                 tebc_response = response_func(time_since_CS, time_since_US)
             firing_rates[i] = (1 - self.balance_distribution[i]) * place_response + self.balance_distribution[i] * tebc_response
+            firing_rates[i] = add_jitter_percentage(firing_rates[i])
         return firing_rates
 
 
     def get_firing_rates(self):
         # Return the current firing rates of all neurons
         return self.firing_rates
+
+    def add_jitter_percentage(value, jitter_percentage=10):
+        jitter_amount = value * (jitter_percentage / 100)
+        jitter = random.uniform(-jitter_amount, jitter_amount)
+        return value + jitter
