@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
+import random
 from ratinabox.Neurons import Neurons, PlaceCells
 from tebc_response2 import response_profiles
-from TEBCcells import TEBC
 
 '''
 Python class template for CombinedPlaceTebcNeurons that integrates both place cell and tEBC
@@ -20,7 +20,7 @@ combined_neurons = CombinedPlaceTebcNeurons(num_neurons, place_cells, balance, t
 '''
 
 
-class VelocityPlaceCells(PlaceCells):
+class TEBC(PlaceCells):
     default_params = dict()  # Add this line to define the default_params attribute
     def __init__(self, agent, N, balance_distribution, responsive_distribution, place_cells_params, tebc_responsive_neurons=None, cell_types=None):
         super().__init__(agent, place_cells_params)
@@ -34,7 +34,7 @@ class VelocityPlaceCells(PlaceCells):
             "wall_geometry": "geodesic",  # Adjust as needed
             "min_fr": 0,  # Adjust as needed
             "max_fr": 12,  # Adjust as needed
-            "save_history": True  # Save history for plotting -- dont think this done anything
+            "save_history": False  # Save history for plotting -- dont think this done anything
         }
 
         # Initialize tebc_responsive_neurons with a default value if not provided
@@ -63,7 +63,7 @@ class VelocityPlaceCells(PlaceCells):
         xpos = position_data[1, :]    # X positions
         ypos = position_data[2, :]    # Y positions
 
-        vel_vector = []
+        vel_vector = [0]
         s = len(times)
 
         for i in range(1, s - 1):
@@ -72,41 +72,34 @@ class VelocityPlaceCells(PlaceCells):
                 vel = hypo / (times[i + 1] - times[i - 1])
                 vel_vector.append(vel)
 
+        vel_vector[0] = vel_vector[1]
+        vel_vector.append(vel_vector[-1])
         # Smooth the velocity data
-        window_size = 15
+        window_size = 7
         self.smoothed_velocity = pd.Series(vel_vector).rolling(window=window_size, min_periods=1, center=True).mean().tolist()
 
 
-    def update_my_state(self, agent_position, current_index):
+    def update_my_state(self, time_since_CS, current_index, baseline):
         # Check the current smoothed velocity
         current_velocity = self.smoothed_velocity[current_index] if current_index < len(self.smoothed_velocity) else 0
-        #self.agent.position = agent_position
-        self.update(save_history=False)
 
-        fr = []
 
-        print(len(self.history['firingrate']))
         for i in range(self.num_neurons):
-            if current_velocity < 0.02:
-                place_response = 0
+            tebc_response = 0
+            if self.tebc_responsive_neurons[i]:
+                cell_type = self.cell_types[i]
+                response_func = response_profiles[cell_type]['response_func']
+                tebc_response = response_func(time_since_CS, baseline[i])
 
+
+            if self.balance_distribution[0] == 100:
+                self.firing_rates[i] = tebc_response
             else:
-                if i < len(self.history['firingrate']) and len(self.history['firingrate'][i]) > 0:
-                    place_response = self.history['firingrate'][i][-1]
-                    print(place_response)
-                else:
-                    place_response = 0  # Or some default value
-                #    print("here2")
+                self.firing_rates[i] = (self.balance_distribution[i] * tebc_response)
 
 
-            self.firing_rates[i] = place_response * (1 - self.balance_distribution[i])
-
-
-            self.history['firingrate'][i][-1] = self.firing_rates[i]
-
-
-        return self.history['firingrate']
-
+        self.save_to_history()
+        return self.firing_rates
 
     def calculate_firing_rate(self, agent_position, time_since_CS, time_since_US):
         firing_rates = np.zeros(self.num_neurons)
@@ -118,29 +111,15 @@ class VelocityPlaceCells(PlaceCells):
                 response_func = response_profiles[cell_type]['response_func']
                 tebc_response = response_func(time_since_CS, time_since_US)
             firing_rates[i] = (1 - self.balance_distribution[i]) * place_response + self.balance_distribution[i] * tebc_response
+            firing_rates[i] = add_jitter_percentage(firing_rates[i])
         return firing_rates
 
-    def update_tebc_response(self, retain_tebc_response):
-        """
-        Update or retain the tEBC response.
-        retain_tebc_response: Boolean indicating whether to retain the existing tEBC response.
-        """
-        if not retain_tebc_response:
-            # Reset or recalculate the tEBC response component
-            self.tebc_responsive_neurons = self.assign_tebc_responsiveness_and_types()
 
     def get_firing_rates(self):
         # Return the current firing rates of all neurons
         return self.firing_rates
 
-    def plot_rate_timeseries(self):
-        # This method acts as a wrapper to the parent class's plot_ratemap method
-        super(CombinedPlaceTebcNeurons, self).plot_rate_timeseries()
-
-    def plot_rate_map(self):
-        # This method acts as a wrapper to the parent class's plot_ratemap method
-        super(CombinedPlaceTebcNeurons, self).plot_rate_map()
-
-    def plot_place_cell_locations(self):
-        # This method acts as a wrapper to the parent class's plot_ratemap method
-        super(CombinedPlaceTebcNeurons, self).plot_place_cell_locations()
+    def add_jitter_percentage(value, jitter_percentage=10):
+        jitter_amount = value * (jitter_percentage / 100)
+        jitter = random.uniform(-jitter_amount, jitter_amount)
+        return value + jitter

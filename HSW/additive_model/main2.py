@@ -160,6 +160,7 @@ data = scipy.io.loadmat(matlab_file_path)
 position_data_envA = data['envA314_522']  # Adjust variable name as needed
 position_data_envB = data['envB314_524']  # Adjust variable name as needed
 
+position_data_envA[1:3] = position_data_envA[1:3]/100
 positions = position_data_envA[1:3].T
 max_x = np.max(positions[:, 0])
 max_y = np.max(positions[:, 1])
@@ -176,6 +177,7 @@ envA_params = {
 
 envA = Environment(params=envA_params)
 
+position_data_envB[1:3] = position_data_envB[1:3]/100
 positions = position_data_envB[1:3].T
 max_x = np.max(positions[:, 0])
 max_y = np.max(positions[:, 1])

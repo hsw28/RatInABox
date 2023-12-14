@@ -1,0 +1,65 @@
+Dec 13, 2023 4:00pm
+Independent and Additive Firing:
+- looking at each cell type as an additive onto place cells, with spikes randomly distributed in each tebc trial, does not result in good conditioning
+- this is in the file tebc_response2_additive.py
+
+Dec 14, 2023 3:10pm
+Dependent Interaction/Multiplicative Interaction:
+- making each modification from TEBC a function of existing place cell firing-- ie firing rate might double from baseline instead of just being an additive of a single  Numberr
+- giving results much more in line with expected but not sure if the mechanism makes sense
+
+
+
+
+PAPERS OF NOTE
+"This suggests that the primary role of the hippocampus in associative learning may not be to encode that the CS predicts the US,
+but rather to encode that the CS is followed by the US when the rat is in a specific location or context "
+- Hippocampal Place Cells Acquire Location-Specific Responses to the Conditioned Stimulus during Auditory Fear Conditioning
+
+hese results provide compelling evidence that hippocampal neurons represent information related to specific perceptual,
+cognitive and behavioural events not tied to a particular spatial location. Furthermore, the range of specificity varied from
+many cells that encode single, frequently experienced events, such as a place or an odour, to a few cells encoding unique
+conjunctions that reflect a rare event, such as a specific odour appearing as a ‘match’ in a particular place.
+- The global record of memory in hippocampal neuronal activity
+
+-------
+--> Independent and Additive Firing:
+Description: Two types of firing are independent and additive. For example, a place cell in its field firing at 2Hz and a 1Hz response to TEBC results in a combined 3Hz response.
+Neuroscience Basis: Separate synaptic inputs for spatial and TEBC information converge on hippocampal neurons, like CA1 pyramidal cells, but act independently and sum their effects.
+
+
+--> Dependent Interaction:
+Description: The two types of firing are not independent. The firing rate due to TEBC depends on the original place cell firing rate, possibly doubling or halving it.
+Neuroscience Basis: Synaptic inputs for TEBC and spatial information interact at the dendritic level of hippocampal neurons, where the response to one input influences the other.
+
+--> Multiplicative Interaction:
+Description: The response to TEBC could exponentially scale with the firing rate of the place cell, suggesting a non-linear interaction.
+Neuroscience Basis: Nonlinear synaptic integration within hippocampal neurons, possibly through mechanisms like NMDA receptor dynamics.
+
+Threshold Modulation:
+Description: The response to TEBC might only affect the firing rate if it crosses a certain threshold.
+Neuroscience Basis: Voltage-gated ion channels in hippocampal neurons modify excitability, responsive to TEBC only above a specific membrane potential threshold.
+
+Temporal Integration:
+Description: The cell integrates signals over time, depending on the history of both place and TEBC-related firing.
+Neuroscience Basis: Synaptic mechanisms like short-term plasticity in hippocampal neurons, where past activity influences current synaptic strength.
+
+--> Context-Dependent Modulation:
+Description: The interaction between place and TEBC firing might be context-dependent, varying in different states.
+Neuroscience Basis: Modulatory inputs from other brain regions that alter synaptic plasticity or neuron excitability in the hippocampus.
+Hebbian and Anti-Hebbian Mechanisms:
+
+Description: The principles of Hebbian learning and its counterpart, anti-Hebbian mechanisms, determine how synaptic strengths are adjusted.
+Neuroscience Basis: Adjustments in synaptic strength through LTP and LTD at specific synapses in hippocampal neurons.
+
+Neuromodulatory Influence:
+Description: Neuromodulators like dopamine or acetylcholine modulate the interaction between TEBC and place cell firing.
+Neuroscience Basis: The release of neuromodulators affects synaptic plasticity, neuron excitability, and signal transduction pathways within hippocampal neurons.
+
+Plasticity-Dependent Changes:
+Description: The interaction between place cell and TEBC firing changes with learning, involving LTP or LTD.
+Neuroscience Basis: Long-term changes in synaptic strength and neuronal properties in response to learning, mediated by molecular changes.
+
+Network-Level Interactions:
+Description: Different populations of neurons interact to produce emergent properties not evident when considering single neurons alone.
+Neuroscience Basis: Complex interactions between different neuron types and layers within the hippocampus, involving subregions like CA1, CA3, and the dentate gyrus.
