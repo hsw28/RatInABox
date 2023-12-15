@@ -79,12 +79,17 @@ class TEBC(PlaceCells):
         self.smoothed_velocity = pd.Series(vel_vector).rolling(window=window_size, min_periods=1, center=True).mean().tolist()
 
 
-    def update_my_state(self, time_since_CS, current_index, baseline):
+    def update_my_state(self, time_since_CS, current_index,  baseline):
         # Check the current smoothed velocity
         current_velocity = self.smoothed_velocity[current_index] if current_index < len(self.smoothed_velocity) else 0
 
 
         for i in range(self.num_neurons):
+            if baseline*7.5 >2
+            if baseline*7.5>.1 & baseline*7.5<2
+            if baseline*7.5<.1
+
+            ''''
             tebc_response = 0
             if self.tebc_responsive_neurons[i]:
                 cell_type = self.cell_types[i]
@@ -96,7 +101,7 @@ class TEBC(PlaceCells):
                 self.firing_rates[i] = tebc_response
             else:
                 self.firing_rates[i] = (self.balance_distribution[i] * tebc_response)
-
+            '''
 
         self.save_to_history()
         return self.firing_rates

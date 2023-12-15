@@ -1,0 +1,2 @@
+Dec 13, 2023 4pm
+looking at each cell type as an additive onto place cells, with spikes randomly distributed in each tebc trial, does not result in good cond_decoding_AvsB

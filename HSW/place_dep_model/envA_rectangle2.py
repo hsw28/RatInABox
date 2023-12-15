@@ -81,6 +81,8 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
         tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index, baseline)
 
 
+
+
         #combine
         firing_rates[:, index] = tebc_firing + place_firing #this is per 1/7.5 seconds
 

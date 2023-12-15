@@ -67,24 +67,15 @@ def simulate_envB(agent, position_data, balance_distribution, responsive_distrib
 
     # Simulation loop
     for index, (current_time, trial_marker) in enumerate(zip(times, trial_markers)):
+
         agent.update()
-
-        #figuring out TEBC firing
-        cs_present, us_present = determine_cs_us(trial_marker)
-
-        if cs_present:
-            last_CS_time = current_time if last_CS_time is None else max(last_CS_time, current_time)
-
-        time_since_CS = current_time - last_CS_time if last_CS_time is not None else -1
-        tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index)
-
 
         #figuring out place cell firing
         PCs.update()
 
         vel = eyeblink_neurons.smoothed_velocity[index];
         if vel < 0.02:
-            place_response = 0
+            place_firing = 0.0027
         else:
             FR = np.array(PCs.history['firingrate'][-1])
             coefficients = [-3.26092478e-04, 1.74074978e-02, 8.36619150e-02, 1.16059441]
@@ -94,13 +85,49 @@ def simulate_envB(agent, position_data, balance_distribution, responsive_distrib
             place_firing[indices_to_zero_out] = 0
             if eyeblink_neurons.balance_distribution[0] != 100:
                 place_firing = (1 - eyeblink_neurons.balance_distribution) * place_firing
+            baseline = place_firing
+
+
+
+        #figuring out TEBC firing
+        cs_present, us_present = determine_cs_us(trial_marker)
+
+        if cs_present:
+            last_CS_time = current_time if last_CS_time is None else max(last_CS_time, current_time)
+
+        time_since_CS = current_time - last_CS_time if last_CS_time is not None else -1
+        tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index, baseline)
 
 
 
         #combine
         firing_rates[:, index] = tebc_firing + place_firing #this is per 1/7.5 seconds
-        cell_spikes = np.random.uniform(0, 1, size=(N,)) < (tebc_firing + place_firing)
-        spikes[:, index] = cell_spikes
 
-    spikes = spikes.astype(int)
+
+
+    FR_MAX = max_excluding_outliers(firing_rates)
+    FR_MIN = 0
+    cell_spikes = np.random.uniform(FR_MIN, FR_MAX, size=(firing_rates.shape)) < firing_rates
+    spikes = cell_spikes.astype(int)
     return spikes, eyeblink_neurons, firing_rates, agent
+
+
+
+def max_excluding_outliers(matrix):
+    # Flatten the matrix to a 1D array
+    data = np.array(matrix).flatten()
+
+    # Compute Q1 and Q3
+    Q1 = np.percentile(data, 25)
+    Q3 = np.percentile(data, 75)
+
+    # Calculate the Interquartile Range
+    IQR = Q3 - Q1
+
+    # Identify outliers
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    non_outliers = [x for x in data if lower_bound <= x <= upper_bound]
+
+    # Return the maximum of non-outlier values
+    return max(non_outliers) if non_outliers else None

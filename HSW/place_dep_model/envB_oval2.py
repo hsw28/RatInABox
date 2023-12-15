@@ -12,7 +12,22 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 
-def simulate_envA(agent, position_data, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells, cell_types):
+
+#modeling environment B (oval)
+#using equation from https://www.biorxiv.org/content/10.1101/2023.10.08.561112v1.full :
+'''
+Place and grid cell rate maps were generated from a real exploration trajectory using
+the open source Python software RatInABox. The respective activity rates are then used
+to train a logistic regressor to predict the real activity of each individual neurons.
+To evaluate each model performance, we computed a F1 score for each neuron using
+a place input model, which penalizes both incorrect classifications of active and inactive periods.
+'''
+
+#allows me to upload my own trajectory <-- I HAVE TO SCALE THIS
+# Similar to EnvA, but with adjustments for EnvB dimensions and trajectory data
+
+
+def simulate_envB(agent, position_data, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells, cell_types):
     N = 80  # Number of neurons
 
     # Define place cell parameters for EnvA
@@ -30,7 +45,8 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
 
     if isinstance(percent_place_cells, list):
         percent_place_cells = float(percent_place_cells[0])
-    percent_to_zero_out = (1 - percent_place_cells)
+
+    percent_to_zero_out = round(1 - percent_place_cells)
     num_elements_to_zero_out = int(N * percent_to_zero_out)
 
     # Randomly select indices to zero out
@@ -42,12 +58,14 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
 
     eyeblink_neurons.calculate_smoothed_velocity(position_data)
 
+    # Initialize last CS and US times
     last_CS_time = None
     last_US_time = None
 
     times = position_data[0, :]
     trial_markers = position_data[3, :]
 
+    # Simulation loop
     for index, (current_time, trial_marker) in enumerate(zip(times, trial_markers)):
 
         agent.update()
@@ -79,6 +97,8 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
 
         time_since_CS = current_time - last_CS_time if last_CS_time is not None else -1
         tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index, baseline)
+
+
 
 
         #combine
