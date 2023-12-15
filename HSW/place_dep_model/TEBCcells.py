@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import random
 from ratinabox.Neurons import Neurons, PlaceCells
-from tebc_response2 import response_profiles
+from tebc_response2 import *
+
 
 '''
 Python class template for CombinedPlaceTebcNeurons that integrates both place cell and tEBC
@@ -22,7 +23,7 @@ combined_neurons = CombinedPlaceTebcNeurons(num_neurons, place_cells, balance, t
 
 class TEBC(PlaceCells):
     default_params = dict()  # Add this line to define the default_params attribute
-    def __init__(self, agent, N, balance_distribution, responsive_distribution, place_cells_params, tebc_responsive_neurons=None, cell_types=None):
+    def __init__(self, agent, N, place_cells_params):
         super().__init__(agent, place_cells_params)
 
         # Define parameters for PlaceCells
@@ -37,23 +38,8 @@ class TEBC(PlaceCells):
             "save_history": False  # Save history for plotting -- dont think this done anything
         }
 
-        # Initialize tebc_responsive_neurons with a default value if not provided
-        if tebc_responsive_neurons is not None:
-            self.tebc_responsive_neurons = tebc_responsive_neurons
-        else:
-            self.tebc_responsive_neurons = np.full(N, False)  # Default value: all False
-
-        # Initialize additional properties for CombinedPlaceTebcNeurons
-
-        if cell_types is not None:
-            self.cell_types = cell_types
-        else:
-            self.cell_types = np.full(N, False)  # Default value: all False
-
         self.agent = agent
         self.num_neurons = N
-        self.balance_distribution = balance_distribution
-        self.responsive_distribution = responsive_distribution
         self.firing_rates = np.zeros(N)
         self.history = {'t': [], 'firingrate': [], 'spikes': []}
 
@@ -79,29 +65,24 @@ class TEBC(PlaceCells):
         self.smoothed_velocity = pd.Series(vel_vector).rolling(window=window_size, min_periods=1, center=True).mean().tolist()
 
 
-    def update_my_state(self, time_since_CS, current_index,  baseline):
+    def update_my_state(self, time_since_CS, current_index, baseline, in_field):
         # Check the current smoothed velocity
         current_velocity = self.smoothed_velocity[current_index] if current_index < len(self.smoothed_velocity) else 0
 
 
         for i in range(self.num_neurons):
-            if baseline*7.5 >2
-            if baseline*7.5>.1 & baseline*7.5<2
-            if baseline*7.5<.1
+            if (baseline[i] * 7.5 > 2) and (current_velocity > 0.02):
+                tebc_response = type_two_response(time_since_CS, baseline[i])
+            if (baseline[i] * 7.5 > 0.1) and (baseline[i] * 7.5 < 2) and (current_velocity > 0.02):
+                tebc_response = type_two_response(time_since_CS, baseline[i])
+            if (baseline[i] * 7.5 < 0.1) and (current_velocity > 0.02):
+                tebc_response = type_three_response(time_since_CS, baseline[i])
+            if (current_velocity < 0.02) and (in_field[i] > 0.2):
+                tebc_response = type_four_response(time_since_CS, baseline[i])
+            if (current_velocity < 0.02) and (in_field[i] < 0.2):
+                tebc_response = type_five_response(time_since_CS, baseline[i])
 
-            ''''
-            tebc_response = 0
-            if self.tebc_responsive_neurons[i]:
-                cell_type = self.cell_types[i]
-                response_func = response_profiles[cell_type]['response_func']
-                tebc_response = response_func(time_since_CS, baseline[i])
-
-
-            if self.balance_distribution[0] == 100:
-                self.firing_rates[i] = tebc_response
-            else:
-                self.firing_rates[i] = (self.balance_distribution[i] * tebc_response)
-            '''
+            self.firing_rates[i] = tebc_response-baseline[i]
 
         self.save_to_history()
         return self.firing_rates

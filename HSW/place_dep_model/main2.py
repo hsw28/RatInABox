@@ -11,7 +11,6 @@ from learningTransfer2 import assess_learning_transfer
 from actualVexpected2 import compare_actual_expected_firing
 from ratinabox.Environment import Environment
 from ratinabox.Agent import Agent
-from assign_tebc_types_and_responsiveness import assign_tebc_types_and_responsiveness
 import os
 import ratinabox
 import matplotlib.pyplot as plt
@@ -240,7 +239,7 @@ with open(results_filepath, "w") as results_file:
         responsive_distribution = get_distribution_values(args.responsive_type, [responsive_val], num_neurons)
 
         # Simulate in Environment A
-        tebc_responsive_neurons, cell_types = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
+        #tebc_responsive_neurons, cell_types = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
 
         # Profile the function
         #cProfile.runctx('simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)', globals(), locals(), 'profile_stats.prof')
@@ -248,15 +247,15 @@ with open(results_filepath, "w") as results_file:
         #p.sort_stats('cumulative').print_stats(10)
 
         # Now run the function normally to capture its output
-        spikesA, eyeblink_neuronsA, response_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values, cell_types)
+        spikesA, eyeblink_neuronsA, response_envA, agentA = simulate_envA(agentA, position_data_envA, percent_place_cells_values)
         # also want a percent of place cells metric
 
 
-        balance_distribution_envA = eyeblink_neuronsA.balance_distribution
-        tebc_responsive_rates_envA = eyeblink_neuronsA.tebc_responsive_neurons
+        #balance_distribution_envA = eyeblink_neuronsA.balance_distribution
+        #tebc_responsive_rates_envA = eyeblink_neuronsA.tebc_responsive_neurons
 
         # Simulate in Environment B using the parameters from Environment A
-        spikesB, eyeblink_neuronsB, response_envB, agentB = simulate_envB(agentB, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, percent_place_cells_values, cell_types)
+        spikesB, eyeblink_neuronsB, response_envB, agentB = simulate_envB(agentB, position_data_envB, percent_place_cells_values)
 
 
 

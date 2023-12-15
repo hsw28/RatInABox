@@ -60,14 +60,15 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
 
         vel = eyeblink_neurons.smoothed_velocity[index];
         if vel < 0.02:
-            place_firing = 0.0027
+            #place_firing = 0.0027
+            place_firing = 0
         else:
             FR = np.array(PCs.history['firingrate'][-1])
             coefficients = [-3.26092478e-04, 1.74074978e-02, 8.36619150e-02, 1.16059441]
             firing_rate_function = np.poly1d(coefficients)
             FR_mod = firing_rate_function(vel*100)
             place_firing = FR*(FR_mod/7.5)
-            place_firing[indices_to_zero_out] = 0
+            place_firing[indices_to_zero_out] = 0.0027
             if eyeblink_neurons.balance_distribution[0] != 100:
                 place_firing = (1 - eyeblink_neurons.balance_distribution) * place_firing
 
@@ -78,7 +79,7 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
         if cs_present:
             last_CS_time = current_time if last_CS_time is None else max(last_CS_time, current_time)
         time_since_CS = current_time - last_CS_time if last_CS_time is not None else -1
-        tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index, place_firing)
+        tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index)
 
 
         #combine

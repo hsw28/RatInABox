@@ -1,31 +1,81 @@
 import numpy as np
 
-def gaussian_peak(time, magnitude_factor, peak_time, sd, baseline):
-    return baseline * (1 + magnitude_factor * np.exp(-((time - peak_time) ** 2) / (2 * sd ** 2))) - baseline
+# Constants for timings
 
-def bimodal_response(time, magnitude_factors, peak_times, sds, baseline):
-    peak1 = gaussian_peak(time, magnitude_factors[0], peak_times[0], sds[0], baseline)
-    peak2 = gaussian_peak(time, magnitude_factors[1], peak_times[1], sds[1], baseline)
-    return peak1 + peak2 - baseline  # Adjust for the double addition of baseline
+def type_one_response(time_since_CS, baseline): #in place field fast firing, moving
+    CS_duration = 0.25  # CS duration in seconds
+    CS_to_US_delay = 0.5  # Delay between CS and US in seconds
+    US_time = CS_duration + CS_to_US_delay  # Time when US occurs
+    total_time = CS_duration + CS_to_US_delay + 0.25  # Total duration considered for response
 
-def linear_response(time, start, end, start_factor, end_factor, baseline):
-    if start <= time <= end:
-        slope = (end_factor - start_factor) / (end - start)
-        return baseline * (1 + slope * (time - start) + start_factor) - baseline
+    if time_since_CS < CS_duration:
+        # Firing rate increases by 50% at the start of CS
+        return baseline * 1.5
+    elif CS_duration <= time_since_CS < (CS_duration + CS_to_US_delay):
+        # Slow decrease after CS until US
+        return baseline * (1.5 - 0.5 * (time_since_CS - CS_duration) / CS_to_US_delay)
+    elif time_since_CS == (CS_duration + CS_to_US_delay):
+        # Sharp increase at US
+        return baseline * 2
     else:
-        return baseline * (1 + start_factor if time < start else end_factor)- baseline
+        # Return to baseline after US
+        return baseline
 
-def uniform_response(time, baseline):
-    return baseline- baseline
+def type_two_response(time_since_CS, baseline): #in place field medium firing, moving
+    CS_duration = 0.25  # CS duration in seconds
+    CS_to_US_delay = 0.5  # Delay between CS and US in seconds
+    US_time = CS_duration + CS_to_US_delay  # Time when US occurs
+    total_time = CS_duration + CS_to_US_delay + 0.25  # Total duration considered for response
+    if time_since_CS < (CS_duration + CS_to_US_delay):
+        # No change during CS
+        return baseline
+    elif time_since_CS == (CS_duration + CS_to_US_delay):
+        # Increase at US
+        return baseline * 1.2
+    else:
+        # Remain at increased rate after US
+        return baseline * 1.2
 
-# Define the response profiles for each cell type
-response_profiles = {
-    1: {'response_func': lambda t, baseline: bimodal_response(t, magnitude_factors=[15, 40], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=baseline)},
-    2: {'response_func': lambda t, baseline: gaussian_peak(t, magnitude_factor=2, peak_time=0.6, sd=0.15, baseline=baseline)},
-    3: {'response_func': lambda t, baseline: linear_response(t, start=0, end=0.6, start_factor=1, end_factor=0.17, baseline=baseline)},
-    4: {'response_func': lambda t, baseline: linear_response(t, start=0, end=0.6, start_factor=1, end_factor=1.05/20, baseline=baseline)},
-    5: {'response_func': lambda t, baseline: linear_response(t, start=0, end=0.6, start_factor=1, end_factor=30/10, baseline=baseline)},
-    6: {'response_func': lambda t, baseline: uniform_response(t, baseline=baseline)},
-    7: {'response_func': lambda t, baseline: bimodal_response(t, magnitude_factors=[10, 25], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=baseline)},
-    8: {'response_func': lambda t, baseline: linear_response(t, start=0, end=0.6, start_factor=1, end_factor=0, baseline=baseline)}
-}
+def type_three_response(time_since_CS, baseline): #out of place field but moving
+    CS_duration = 0.25  # CS duration in seconds
+    CS_to_US_delay = 0.5  # Delay between CS and US in seconds
+    US_time = CS_duration + CS_to_US_delay  # Time when US occurs
+    total_time = CS_duration + CS_to_US_delay + 0.25  # Total duration considered for response
+    if time_since_CS < CS_duration:
+        # Sharp decrease at CS
+        return baseline * 0.5
+    elif CS_duration <= time_since_CS < (CS_duration + CS_to_US_delay):
+        # Remain at decreased rate until US
+        return baseline * 0.5
+    elif time_since_CS == (CS_duration + CS_to_US_delay):
+        # Slight increase at US
+        return baseline * 0.6
+    else:
+        # Return to baseline after US
+        return baseline
+
+def type_four_response(time_since_CS, baseline): #not moving, in field
+    CS_duration = 0.25  # CS duration in seconds
+    CS_to_US_delay = 0.5  # Delay between CS and US in seconds
+    US_time = CS_duration + CS_to_US_delay  # Time when US occurs
+    total_time = CS_duration + CS_to_US_delay + 0.25  # Total duration considered for response
+    if time_since_CS < CS_duration:
+        # Sudden increase at the start of CS
+        return baseline * 1.5
+    elif CS_duration <= time_since_CS < US_time:
+        # Gradual decrease after the sudden increase, assuming a linear decrease for simplicity
+        decrease_factor = 1 - (time_since_CS - CS_duration) / (US_time - CS_duration)
+        return baseline * (1 + (0.5 * decrease_factor))
+    elif time_since_CS >= US_time:
+        # Large spike at US and then return to baseline
+        return baseline * 3 if time_since_CS == US_time else baseline
+
+
+def type_five_response(time_since_CS, baseline): #not moving, in field
+    CS_duration = 0.25  # CS duration in seconds
+    CS_to_US_delay = 0.5  # Delay between CS and US in seconds
+    US_time = CS_duration + CS_to_US_delay  # Time when US occurs
+    total_time = CS_duration + CS_to_US_delay + 0.25  # Total duration considered for response
+    # Random fluctuation throughout the period
+    fluctuation = np.random.uniform(-0.2, 0.2) * baseline
+    return baseline + fluctuation

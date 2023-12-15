@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 
-def simulate_envA(agent, position_data, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells, cell_types):
+def simulate_envA(agent, position_data, percent_place_cells):
     N = 80  # Number of neurons
 
     # Define place cell parameters for EnvA
@@ -35,7 +35,7 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
 
     # Randomly select indices to zero out
     indices_to_zero_out = random.sample(range(N), num_elements_to_zero_out)
-    eyeblink_neurons = TEBC(agent, N, balance_distribution, responsive_distribution, PCs.params, tebc_responsive_neurons, cell_types)
+    eyeblink_neurons = TEBC(agent, N, PCs.params)
 
     firing_rates = np.zeros((N, position_data.shape[1]))
     spikes = np.zeros((N, position_data.shape[1]))
@@ -56,18 +56,19 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
         PCs.update()
 
         vel = eyeblink_neurons.smoothed_velocity[index];
+        FR = np.array(PCs.history['firingrate'][-1])
         if vel < 0.02:
-            place_firing = 0.0027
+            place_firing = [0.0027] * N
+            baseline = place_firing
         else:
-            FR = np.array(PCs.history['firingrate'][-1])
             coefficients = [-3.26092478e-04, 1.74074978e-02, 8.36619150e-02, 1.16059441]
             firing_rate_function = np.poly1d(coefficients)
             FR_mod = firing_rate_function(vel*100) #getting to cm/s
             place_firing = FR*(FR_mod/7.5) #converting per time stamp
-            place_firing[indices_to_zero_out] = 0
-            if eyeblink_neurons.balance_distribution[0] != 100:
-                place_firing = (1 - eyeblink_neurons.balance_distribution) * place_firing
-            baseline = place_firing
+            place_firing[indices_to_zero_out] = 0.0027
+            #if eyeblink_neurons.balance_distribution[0] != 100:
+            #    place_firing = (1 - eyeblink_neurons.balance_distribution) * place_firing
+            field_baseline = place_firing
 
 
 
@@ -78,7 +79,7 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
             last_CS_time = current_time if last_CS_time is None else max(last_CS_time, current_time)
 
         time_since_CS = current_time - last_CS_time if last_CS_time is not None else -1
-        tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index, baseline)
+        tebc_firing = eyeblink_neurons.update_my_state(time_since_CS, index, field_baseline, FR)
 
 
 
