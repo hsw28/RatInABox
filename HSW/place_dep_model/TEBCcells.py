@@ -72,7 +72,7 @@ class TEBC(PlaceCells):
 
         for i in range(self.num_neurons):
             if (baseline[i] * 7.5 > 2) and (current_velocity > 0.02):
-                tebc_response = type_two_response(time_since_CS, baseline[i])
+                tebc_response = type_one_response(time_since_CS, baseline[i])
             if (baseline[i] * 7.5 > 0.1) and (baseline[i] * 7.5 < 2) and (current_velocity > 0.02):
                 tebc_response = type_two_response(time_since_CS, baseline[i])
             if (baseline[i] * 7.5 < 0.1) and (current_velocity > 0.02):
