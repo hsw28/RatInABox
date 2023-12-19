@@ -78,6 +78,7 @@ class TEBC(PlaceCells):
 
 
         for i in range(self.num_neurons):
+<<<<<<< HEAD
             if self.tebc_responsive_neurons[i]:
                 if (in_field[i] >= 0.2) and (current_velocity > 0.02): #in field running
                     tebc_response = type_one_response(time_since_CS, baseline[i])
@@ -89,6 +90,18 @@ class TEBC(PlaceCells):
                     tebc_response = type_four_response(time_since_CS, baseline[i])
             else:
                  tebc_response = baseline[i]
+=======
+            if (baseline[i] * 7.5 > 2) and (current_velocity > 0.02):
+                tebc_response = type_one_response(time_since_CS, baseline[i])
+            if (baseline[i] * 7.5 > 0.1) and (baseline[i] * 7.5 < 2) and (current_velocity > 0.02):
+                tebc_response = type_two_response(time_since_CS, baseline[i])
+            if (baseline[i] * 7.5 < 0.1) and (current_velocity > 0.02):
+                tebc_response = type_three_response(time_since_CS, baseline[i])
+            if (current_velocity < 0.02) and (in_field[i] > 0.2):
+                tebc_response = type_four_response(time_since_CS, baseline[i])
+            if (current_velocity < 0.02) and (in_field[i] < 0.2):
+                tebc_response = type_five_response(time_since_CS, baseline[i])
+>>>>>>> 66b139acf6d07e640d5e800fb15c886ffdcba757
 
             self.firing_rates[i] = tebc_response-baseline[i]
 
