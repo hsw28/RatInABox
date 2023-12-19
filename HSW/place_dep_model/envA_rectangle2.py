@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 
-def simulate_envA(agent, position_data, percent_place_cells):
+def simulate_envA(agent, position_data, responsive_distribution, tebc_responsive_neurons, percent_place_cells):
     N = 80  # Number of neurons
 
     # Define place cell parameters for EnvA
@@ -35,7 +35,7 @@ def simulate_envA(agent, position_data, percent_place_cells):
 
     # Randomly select indices to zero out
     indices_to_zero_out = random.sample(range(N), num_elements_to_zero_out)
-    eyeblink_neurons = TEBC(agent, N, PCs.params)
+    eyeblink_neurons = TEBC(agent, N, responsive_distribution, PCs.params, tebc_responsive_neurons)
 
     firing_rates = np.zeros((N, position_data.shape[1]))
     spikes = np.zeros((N, position_data.shape[1]))

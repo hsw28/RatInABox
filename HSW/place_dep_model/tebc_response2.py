@@ -2,59 +2,49 @@ import numpy as np
 
 # Constants for timings
 
-def type_one_response(time_since_CS, baseline): #in place field fast firing, moving
+def type_one_response(time_since_CS, baseline): #in place field firing, running
+    """
+    This cell type shows a slight decrease during the CS period,
+    a sharp decrease at the US, followed by an immediate increase after the US.
+    """
     CS_duration = 0.25  # CS duration in seconds
     CS_to_US_delay = 0.5  # Delay between CS and US in seconds
     US_time = CS_duration + CS_to_US_delay  # Time when US occurs
-    total_time = CS_duration + CS_to_US_delay + 0.25  # Total duration considered for response
+
+    # A parameter to control how much the firing rate increases after US
+    post_US_increase_factor = 1.2
 
     if time_since_CS < CS_duration:
-        # Firing rate increases by 50% at the start of CS
-        return baseline * 1.5
-    elif CS_duration <= time_since_CS < (CS_duration + CS_to_US_delay):
-        # Slow decrease after CS until US
-        return baseline * (1.5 - 0.5 * (time_since_CS - CS_duration) / CS_to_US_delay)
-    elif time_since_CS == (CS_duration + CS_to_US_delay):
-        # Sharp increase at US
-        return baseline * 2
+        return baseline * 0.9  # Slight decrease during CS
+    elif time_since_CS < US_time:
+        return baseline  # Return to baseline after CS and before US
+    elif time_since_CS == US_time:
+        return baseline * 0.5  # Sharp decrease at US
     else:
-        # Return to baseline after US
-        return baseline
+        # Increase after US; the increase happens for a short period after US
+        time_after_US = time_since_CS - US_time
+        if time_after_US < 0.1:  # Assume the increase lasts for 100ms
+            return baseline * post_US_increase_factor
+        else:
+            return baseline  # Return to baseline after the short increase
 
-def type_two_response(time_since_CS, baseline): #in place field medium firing, moving
+
+def type_two_response(time_since_CS, baseline): #out of place field, running
+    """
+    This cell type shows a slight increase during the CS and the US.
+    """
     CS_duration = 0.25  # CS duration in seconds
     CS_to_US_delay = 0.5  # Delay between CS and US in seconds
     US_time = CS_duration + CS_to_US_delay  # Time when US occurs
-    total_time = CS_duration + CS_to_US_delay + 0.25  # Total duration considered for response
-    if time_since_CS < (CS_duration + CS_to_US_delay):
-        # No change during CS
-        return baseline
-    elif time_since_CS == (CS_duration + CS_to_US_delay):
-        # Increase at US
-        return baseline * 1.2
-    else:
-        # Remain at increased rate after US
-        return baseline * 1.2
 
-def type_three_response(time_since_CS, baseline): #out of place field but moving
-    CS_duration = 0.25  # CS duration in seconds
-    CS_to_US_delay = 0.5  # Delay between CS and US in seconds
-    US_time = CS_duration + CS_to_US_delay  # Time when US occurs
-    total_time = CS_duration + CS_to_US_delay + 0.25  # Total duration considered for response
-    if time_since_CS < CS_duration:
-        # Sharp decrease at CS
-        return baseline * 0.5
-    elif CS_duration <= time_since_CS < (CS_duration + CS_to_US_delay):
-        # Remain at decreased rate until US
-        return baseline * 0.5
-    elif time_since_CS == (CS_duration + CS_to_US_delay):
-        # Slight increase at US
-        return baseline * 0.6
+    if time_since_CS < US_time:
+        return baseline * 1.1  # No change during CS
+    elif time_since_CS == US_time:
+        return baseline * 1.1  # Slight increase at US
     else:
-        # Return to baseline after US
-        return baseline
+        return baseline  # Remain at slight increase after US
 
-def type_four_response(time_since_CS, baseline): #not moving, in field
+def type_three_response(time_since_CS, baseline): #not moving, in field
     CS_duration = 0.25  # CS duration in seconds
     CS_to_US_delay = 0.5  # Delay between CS and US in seconds
     US_time = CS_duration + CS_to_US_delay  # Time when US occurs
@@ -71,7 +61,7 @@ def type_four_response(time_since_CS, baseline): #not moving, in field
         return baseline * 3 if time_since_CS == US_time else baseline
 
 
-def type_five_response(time_since_CS, baseline): #not moving, in field
+def type_four_response(time_since_CS, baseline): #not moving, in field
     CS_duration = 0.25  # CS duration in seconds
     CS_to_US_delay = 0.5  # Delay between CS and US in seconds
     US_time = CS_duration + CS_to_US_delay  # Time when US occurs

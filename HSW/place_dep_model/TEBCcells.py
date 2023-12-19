@@ -23,7 +23,7 @@ combined_neurons = CombinedPlaceTebcNeurons(num_neurons, place_cells, balance, t
 
 class TEBC(PlaceCells):
     default_params = dict()  # Add this line to define the default_params attribute
-    def __init__(self, agent, N, place_cells_params):
+    def __init__(self, agent, N, responsive_distribution, place_cells_params, tebc_responsive_neurons=None):
         super().__init__(agent, place_cells_params)
 
         # Define parameters for PlaceCells
@@ -38,9 +38,16 @@ class TEBC(PlaceCells):
             "save_history": False  # Save history for plotting -- dont think this done anything
         }
 
+        # Initialize tebc_responsive_neurons with a default value if not provided
+        if tebc_responsive_neurons is not None:
+            self.tebc_responsive_neurons = tebc_responsive_neurons
+        else:
+            self.tebc_responsive_neurons = np.full(N, False)  # Default value: all False
+
         self.agent = agent
         self.num_neurons = N
         self.firing_rates = np.zeros(N)
+        self.responsive_distribution = responsive_distribution
         self.history = {'t': [], 'firingrate': [], 'spikes': []}
 
 
@@ -71,16 +78,17 @@ class TEBC(PlaceCells):
 
 
         for i in range(self.num_neurons):
-            if (baseline[i] * 7.5 > 2) and (current_velocity > 0.02):
-                tebc_response = type_two_response(time_since_CS, baseline[i])
-            if (baseline[i] * 7.5 > 0.1) and (baseline[i] * 7.5 < 2) and (current_velocity > 0.02):
-                tebc_response = type_two_response(time_since_CS, baseline[i])
-            if (baseline[i] * 7.5 < 0.1) and (current_velocity > 0.02):
-                tebc_response = type_three_response(time_since_CS, baseline[i])
-            if (current_velocity < 0.02) and (in_field[i] > 0.2):
-                tebc_response = type_four_response(time_since_CS, baseline[i])
-            if (current_velocity < 0.02) and (in_field[i] < 0.2):
-                tebc_response = type_five_response(time_since_CS, baseline[i])
+            if self.tebc_responsive_neurons[i]:
+                if (in_field[i] >= 0.2) and (current_velocity > 0.02): #in field running
+                    tebc_response = type_one_response(time_since_CS, baseline[i])
+                if (in_field[i] < 0.2) and (current_velocity > 0.02): #out of field running
+                    tebc_response = type_two_response(time_since_CS, baseline[i])
+                if (current_velocity < 0.02) and (in_field[i] > 0.2): #in field still
+                    tebc_response = type_three_response(time_since_CS, baseline[i])
+                if (current_velocity < 0.02) and (in_field[i] < 0.2): #out of field still
+                    tebc_response = type_four_response(time_since_CS, baseline[i])
+            else:
+                 tebc_response = baseline[i]
 
             self.firing_rates[i] = tebc_response-baseline[i]
 
