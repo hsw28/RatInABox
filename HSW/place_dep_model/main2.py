@@ -18,10 +18,12 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
 from cond_decoding_AvsB import cond_decoding_AvsB
+from pos_decoding_self import pos_decoding_self
 from cebra import CEBRA
 import cProfile
 import pstats
 import random
+
 
 
 
@@ -301,18 +303,42 @@ with open(results_filepath, "w") as results_file:
 
 
         envA_eyeblink = position_data_envA[3].T
-        response_envA = response_envA[envA_eyeblink > 0,:]
+        response_envA_test = response_envA[envA_eyeblink > 0,:]
         envA_eyeblink = envA_eyeblink[envA_eyeblink > 0]
         envA_eyeblink = np.where(envA_eyeblink <= 5, 1, 2)
 
         envB_eyeblink = position_data_envB[3].T
-        response_envB = response_envB[envB_eyeblink > 0,:]
+        response_envB_test = response_envB[envB_eyeblink > 0,:]
         envB_eyeblink = envB_eyeblink[envB_eyeblink > 0]
         envB_eyeblink = np.where(envB_eyeblink <= 5, 1, 2)
 
 
         #run cebra decoding
-        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA, envA_eyeblink, response_envB, envB_eyeblink)
+        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA_test, envA_eyeblink, response_envB_test, envB_eyeblink)
+
+
+        #run position decoding for env A
+        posA = position_data_envA[1:2].T
+        vel = eyeblink_neuronsA.smoothed_velocity
+        vel= np.array(vel)
+        indices = np.where(vel > 0.02)[0]
+        posA = posA[indices]
+        response_envA = response_envA[indices]
+
+        err_allA, err_all_shuffA = pos_decoding_self(response_envA, posA, .75)
+
+
+        #run position decoding for env B
+        posB = position_data_envA[1:2].T
+        vel = eyeblink_neuronsB.smoothed_velocity
+        vel= np.array(vel)
+        indices = np.where(vel > 0.02)[0]
+        posB = posB[indices]
+        response_envB = response_envB[indices]
+
+        err_allB, err_all_shuffB = pos_decoding_self(response_envB, posB, .75)
+
+
 
         # Construct the identifier for this iteration
         identifier = f"responsive_{responsive_val}_{args.responsive_type}_PCs_{args.percent_place_cells}_holdovers_{args.holdovers}.npy"
@@ -322,6 +348,10 @@ with open(results_filepath, "w") as results_file:
         results_file.write(f"Parameters: {identifier}\n")
         results_file.write(f"fract_control_all: {fract_control_all}\n")
         results_file.write(f"fract_test_all: {fract_test_all}\n")
+        results_file.write(f"pos decoding A: {err_allA}\n")
+        results_file.write(f"pos decoding A shuffled: {err_all_shuffA}\n")
+        results_file.write(f"pos decoding B: {err_allB}\n")
+        results_file.write(f"pos decoding B shuffled: {err_all_shuffB}\n")
         results_file.write("\n")  # Add a newline for readability
 
 
