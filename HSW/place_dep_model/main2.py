@@ -242,6 +242,8 @@ agentA.import_trajectory(times=desired_time_stepsA, positions=interpolated_posit
 agentB = Agent(envB)
 agentB.import_trajectory(times=desired_time_stepsB, positions=interpolated_positions_envB, interpolate=False)
 
+count = np.sum(trial_markers_envB > 0)
+print(count)
 
 # Perform grid search over balance and responsive rates
 with open(results_filepath, "w") as results_file:
@@ -275,7 +277,7 @@ with open(results_filepath, "w") as results_file:
         #p.sort_stats('cumulative').print_stats(10)
 
         # Now run the function normally to capture its output
-        spikesA, eyeblink_neuronsA, response_envA, agentA = simulate_envA(agentA, position_data_envA, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values)
+        spikesA, eyeblink_neuronsA, firingrate_envA, agentA = simulate_envA(agentA, position_data_envA, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values)
         # also want a percent of place cells metric
 
         if holdover == 1:
@@ -284,7 +286,7 @@ with open(results_filepath, "w") as results_file:
             tebc_responsive_neurons = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
 
         # Simulate in Environment B using the parameters from Environment A
-        spikesB, eyeblink_neuronsB, response_envB, agentB = simulate_envB(agentB, position_data_envB, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values)
+        spikesB, eyeblink_neuronsB, firingrate_envB, agentB = simulate_envB(agentB, position_data_envB, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values)
 
 
 
@@ -314,16 +316,19 @@ with open(results_filepath, "w") as results_file:
 
         #####save
         # Construct the full file paths
-        filename_envA = f"response_envA_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}_holdovers_{args.holdover_type}.npy"
-        filename_envB = f"response_envB_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}_holdovers_{args.holdover_type}.npy"
+        filename_envA = f"PDM_response_envA_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}_holdovers_{args.holdover_type}.npy"
+        filename_envB = f"PDM_response_envB_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}_holdovers_{args.holdover_type}.npy"
         full_path_envA = os.path.join(save_directory, filename_envA)
         full_path_envB = os.path.join(save_directory, filename_envB)
         # Save the response arrays to files
 
 
-        np.save(full_path_envA, spikesA)
+        #np.save(full_path_envA, spikesA)
+        #np.save(full_path_envB, spikesB)
 
-        np.save(full_path_envB, spikesB)
+        np.save(full_path_envA, firingrate_envA)
+        np.save(full_path_envB, firingrate_envB)
+
         ######
 
         # Assess learning transfer and other metrics

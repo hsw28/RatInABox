@@ -243,23 +243,6 @@ agentB.import_trajectory(times=desired_time_stepsB, positions=interpolated_posit
 
 
 
-
-
-agentA = Agent(envA)
-times = position_data_envA[0]  # Timestamps
-positions = position_data_envA[1:3].T  # Positions (x, y)
-unique_times, indices = np.unique(times, return_index=True)
-unique_positions = positions[indices]
-agentA.import_trajectory(times=unique_times, positions=unique_positions)
-
-
-agentB = Agent(envB)
-times = position_data_envB[0]  # Timestamps
-positions = position_data_envB[1:3].T  # Positions (x, y)
-unique_times, indices = np.unique(times, return_index=True)
-unique_positions = positions[indices]
-agentB.import_trajectory(times=unique_times, positions=unique_positions)
-
 # Perform grid search over balance and responsive rates
 with open(results_filepath, "w") as results_file:
     for balance_value, responsive_val, percent_place_cell in itertools.product(balance_values, responsive_values, percent_place_cells):
@@ -291,7 +274,7 @@ with open(results_filepath, "w") as results_file:
         #p.sort_stats('cumulative').print_stats(10)
 
         # Now run the function normally to capture its output
-        spikesA, eyeblink_neuronsA, response_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values, cell_types)
+        spikesA, eyeblink_neuronsA, firingrate_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values, cell_types)
         # also want a percent of place cells metric
 
 
@@ -299,7 +282,7 @@ with open(results_filepath, "w") as results_file:
         tebc_responsive_rates_envA = eyeblink_neuronsA.tebc_responsive_neurons
 
         # Simulate in Environment B using the parameters from Environment A
-        spikesB, eyeblink_neuronsB, response_envB, agentB = simulate_envB(agentB, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, percent_place_cells_values, cell_types)
+        spikesB, eyeblink_neuronsB, firingrate_envB, agentB = simulate_envB(agentB, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, percent_place_cells_values, cell_types)
 
 
 
@@ -329,8 +312,8 @@ with open(results_filepath, "w") as results_file:
 
         #####save
         # Construct the full file paths
-        filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
-        filename_envB = f"response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
+        filename_envA = f"DM_response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
+        filename_envB = f"DM_response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
         full_path_envA = os.path.join(save_directory, filename_envA)
         full_path_envB = os.path.join(save_directory, filename_envB)
         # Save the response arrays to files
@@ -348,18 +331,18 @@ with open(results_filepath, "w") as results_file:
 
 
         envA_eyeblink = position_data_envA[3].T
-        response_envA = response_envA[envA_eyeblink > 0,:]
+        response_envA_test = response_envA[envA_eyeblink > 0,:]
         envA_eyeblink = envA_eyeblink[envA_eyeblink > 0]
         envA_eyeblink = np.where(envA_eyeblink <= 5, 1, 2)
 
         envB_eyeblink = position_data_envB[3].T
-        response_envB = response_envB[envB_eyeblink > 0,:]
+        response_envB_test = response_envB[envB_eyeblink > 0,:]
         envB_eyeblink = envB_eyeblink[envB_eyeblink > 0]
         envB_eyeblink = np.where(envB_eyeblink <= 5, 1, 2)
 
 
         #run cebra decoding
-        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA, envA_eyeblink, response_envB, envB_eyeblink)
+        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA_test, envA_eyeblink, response_envB_test, envB_eyeblink)
 
         #run position decoding for env A
         posA = position_data_envA[1:3].T

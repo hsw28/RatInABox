@@ -78,7 +78,7 @@ def simulate_envB(agent, position_data, balance_distribution, responsive_distrib
 
         vel = eyeblink_neurons.smoothed_velocity[index];
         if vel < 0.02:
-            place_firing = .02/30
+            place_firing = [0.02/30] * N
             baseline = place_firing
         else:
             FR = np.array(PCs.history['firingrate'][-1])

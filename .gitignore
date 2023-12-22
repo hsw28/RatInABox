@@ -1,4 +1,7 @@
-#gitignore 
+#gitignore
+*.lprof
+*.pt
+*.prof 
 figures/
 rawdata/
 journal/

@@ -276,7 +276,7 @@ with open(results_filepath, "w") as results_file:
 #        p.sort_stats('cumulative').print_stats(10)
 
         # Now run the function normally to capture its output
-        spikesA, eyeblink_neuronsA, response_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values, cell_types)
+        spikesA, eyeblink_neuronsA, firingrate_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values, cell_types)
         # also want a percent of place cells metric
 
 
@@ -284,7 +284,7 @@ with open(results_filepath, "w") as results_file:
         tebc_responsive_rates_envA = eyeblink_neuronsA.tebc_responsive_neurons
 
         # Simulate in Environment B using the parameters from Environment A
-        spikesB, eyeblink_neuronsB, response_envB, agentB = simulate_envB(agentB, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, percent_place_cells_values, cell_types)
+        spikesB, eyeblink_neuronsB, firingrate_envB, agentB = simulate_envB(agentB, position_data_envB, balance_distribution_envA, tebc_responsive_rates_envA, tebc_responsive_neurons, percent_place_cells_values, cell_types)
 
 
 
@@ -312,16 +312,18 @@ with open(results_filepath, "w") as results_file:
 
         #####save
         # Construct the full file paths
-        filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
-        filename_envB = f"response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
+        filename_envA = f"AM_response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
+        filename_envB = f"AM_response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
         full_path_envA = os.path.join(save_directory, filename_envA)
         full_path_envB = os.path.join(save_directory, filename_envB)
         # Save the response arrays to files
 
 
-        np.save(full_path_envA, spikesA)
+        #np.save(full_path_envA, spikesA)
+        #np.save(full_path_envB, spikesB)
+        np.save(full_path_envA, firingrate_envA)
+        np.save(full_path_envB, firingrate_envB)
 
-        np.save(full_path_envB, spikesB)
         ######
 
         # Assess learning transfer and other metrics
