@@ -15,4 +15,4 @@ source activate ratinabox
 
 export PYTHONPATH="${PYTHONPATH}:~/Programming/RatInABox/"
 
-python main2.py --balance_values 0.5 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7
+python ~/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 0.5 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7
