@@ -121,7 +121,7 @@ responsive_values = parse_list(args.responsive_values)
 percent_place_cells_values = parse_list(args.percent_place_cells)
 
 
-save_directory = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/results'
+save_directory = '~/Programming/data_eyeblink/rat314/ratinabox_data/results'
 ratinabox.figure_directory = save_directory
 os.makedirs(save_directory, exist_ok=True)
 
@@ -158,7 +158,7 @@ def get_distribution_values(dist_type, params, size):
 
 
 # Load MATLAB file and extract position data
-matlab_file_path = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'  # Replace with your MATLAB file path
+matlab_file_path = '~/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'  # Replace with your MATLAB file path
 data = scipy.io.loadmat(matlab_file_path)
 position_data_envA = data['envA314_522']  # Adjust variable name as needed
 position_data_envB = data['envB314_524']  # Adjust variable name as needed
