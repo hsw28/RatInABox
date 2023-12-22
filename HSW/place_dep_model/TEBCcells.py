@@ -68,7 +68,7 @@ class TEBC(PlaceCells):
         vel_vector[0] = vel_vector[1]
         vel_vector.append(vel_vector[-1])
         # Smooth the velocity data
-        window_size = 7
+        window_size = 30
         self.smoothed_velocity = pd.Series(vel_vector).rolling(window=window_size, min_periods=1, center=True).mean().tolist()
 
 

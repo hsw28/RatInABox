@@ -21,14 +21,14 @@ def uniform_response(time, baseline):
     return baseline
 
 # Define the response profiles for each cell type with estimated baselines and adjusted times
-# dividing by 6000 bc 80 trials and 7.5 samples per second
+# dividing by 2400 bc 80 trials and 7.5 samples per second
 response_profiles = {
-    1: {'response_func': lambda t: bimodal_response(t, magnitudes=[15/6000, 40/6000], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=10/6000), 'baseline': 10/6000},
-    2: {'response_func': lambda t: gaussian_peak(t, magnitude=2/6000, peak_time=0.6, sd=0.15) + 5/6000, 'baseline': 5/6000},
-    3: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=25/6000, end_value=0) + 25/6000, 'baseline': 25/6000},
-    4: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=20/6000, end_value=0.05) + 20/6000, 'baseline': 20/6000},
-    5: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=10/6000, end_value=30/6000) + 10/6000, 'baseline': 10/6000},
-    6: {'response_func': lambda t: uniform_response(t, baseline=15/6000), 'baseline': 15/6000},
-    7: {'response_func': lambda t: bimodal_response(t, magnitudes=[10/6000, 25/6000], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=10/6000), 'baseline': 10/6000},
-    8: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=10/6000, end_value=0) + 10/6000, 'baseline': 10/6000}
+    1: {'response_func': lambda t: bimodal_response(t, magnitudes=[15/2400, 40/2400], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=10/2400), 'baseline': 10/2400},
+    2: {'response_func': lambda t: gaussian_peak(t, magnitude=2/2400, peak_time=0.6, sd=0.15) + 5/2400, 'baseline': 5/2400},
+    3: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=25/2400, end_value=0) + 25/2400, 'baseline': 25/2400},
+    4: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=20/2400, end_value=0.05) + 20/2400, 'baseline': 20/2400},
+    5: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=10/2400, end_value=30/2400) + 10/2400, 'baseline': 10/2400},
+    6: {'response_func': lambda t: uniform_response(t, baseline=15/2400), 'baseline': 15/2400},
+    7: {'response_func': lambda t: bimodal_response(t, magnitudes=[10/2400, 25/2400], peak_times=[0.3, 0.8], sds=[0.05, 0.1], baseline=10/2400), 'baseline': 10/2400},
+    8: {'response_func': lambda t: linear_response(t, start=0, end=0.6, start_value=10/2400, end_value=0) + 10/2400, 'baseline': 10/2400}
 }

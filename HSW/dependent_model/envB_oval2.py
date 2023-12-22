@@ -65,6 +65,9 @@ def simulate_envB(agent, position_data, balance_distribution, responsive_distrib
     times = position_data[0, :]
     trial_markers = position_data[3, :]
 
+    coefficients = [-3.26092478e-04, 1.74074978e-02, 8.36619150e-02, 1.16059441]
+    firing_rate_function = np.poly1d(coefficients)
+
     # Simulation loop
     for index, (current_time, trial_marker) in enumerate(zip(times, trial_markers)):
 
@@ -75,15 +78,13 @@ def simulate_envB(agent, position_data, balance_distribution, responsive_distrib
 
         vel = eyeblink_neurons.smoothed_velocity[index];
         if vel < 0.02:
-            place_firing = [0.0027] * N
+            place_firing = .02/30
             baseline = place_firing
         else:
             FR = np.array(PCs.history['firingrate'][-1])
-            coefficients = [-3.26092478e-04, 1.74074978e-02, 8.36619150e-02, 1.16059441]
-            firing_rate_function = np.poly1d(coefficients)
             FR_mod = firing_rate_function(vel*100) #getting to cm/s
-            place_firing = FR*(FR_mod/7.5) #converting per time stamp
-            place_firing[indices_to_zero_out] = 0.0027
+            place_firing = FR*(FR_mod/30) #converting per time stamp
+            place_firing[indices_to_zero_out] = 0.02/30
             if eyeblink_neurons.balance_distribution[0] != 100:
                 place_firing = (1 - eyeblink_neurons.balance_distribution) * place_firing
             baseline = place_firing

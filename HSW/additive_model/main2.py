@@ -172,13 +172,11 @@ percent_place_cells = parse_list(args.percent_place_cells) if args.percent_place
 balance_zero_done = False
 responsive_zero_done = False
 
-
-
 # Define desired time steps for interpolation (e.g., at a fixed interval)
 # Interpolate for EnvA
 trial_markers_envA = position_data_envA[3, :]
 times_envA = position_data_envA[0]
-desired_time_stepsA = np.arange(min(times_envA), max(times_envA), step=1/75)  # Example: 75 Hz sampling rate
+desired_time_stepsA = np.arange(min(times_envA), max(times_envA), step=1/30)  # Example: 75 Hz sampling rate
 interpolated_trial_markers_envA = map_trial_markers_to_interpolated_times(times_envA, trial_markers_envA, desired_time_stepsA)
 trial_markers_envA = interpolated_trial_markers_envA
 positions_envA = position_data_envA[1:3].T
@@ -194,7 +192,7 @@ position_data_envA = position_data_envA.T
 # Interpolate for EnvB
 trial_markers_envB = position_data_envB[3, :]
 times_envB = position_data_envB[0]
-desired_time_stepsB = np.arange(min(times_envB), max(times_envB), step=1/75)  # Example: 75 Hz sampling rate
+desired_time_stepsB = np.arange(min(times_envB), max(times_envB), step=1/30)  # Example: 75 Hz sampling rate
 interpolated_trial_markers_envB = map_trial_markers_to_interpolated_times(times_envB, trial_markers_envB, desired_time_stepsB)
 trial_markers_envB = interpolated_trial_markers_envB
 positions_envB = position_data_envB[1:3].T
