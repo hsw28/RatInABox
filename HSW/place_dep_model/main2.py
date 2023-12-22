@@ -318,7 +318,7 @@ with open(results_filepath, "w") as results_file:
 
 
         #run position decoding for env A
-        posA = position_data_envA[1:2].T
+        posA = position_data_envA[1:3].T
         vel = eyeblink_neuronsA.smoothed_velocity
         vel= np.array(vel)
         indices = np.where(vel > 0.02)[0]
@@ -329,7 +329,7 @@ with open(results_filepath, "w") as results_file:
 
 
         #run position decoding for env B
-        posB = position_data_envA[1:2].T
+        posB = position_data_envB[1:3].T
         vel = eyeblink_neuronsB.smoothed_velocity
         vel= np.array(vel)
         indices = np.where(vel > 0.02)[0]

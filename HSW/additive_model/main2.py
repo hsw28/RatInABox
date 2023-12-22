@@ -9,15 +9,18 @@ from envB_oval2 import simulate_envB
 from trial_marker2 import determine_cs_us
 from learningTransfer2 import assess_learning_transfer
 from actualVexpected2 import compare_actual_expected_firing
+from map_trial_markers_to_interpolated_times import map_trial_markers_to_interpolated_times
 from ratinabox.Environment import Environment
 from ratinabox.Agent import Agent
 from assign_tebc_types_and_responsiveness import assign_tebc_types_and_responsiveness
 import os
 import ratinabox
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 import sys
 sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
 from cond_decoding_AvsB import cond_decoding_AvsB
+from pos_decoding_self import pos_decoding_self
 from cebra import CEBRA
 import cProfile
 import pstats
@@ -160,7 +163,52 @@ data = scipy.io.loadmat(matlab_file_path)
 position_data_envA = data['envA314_522']  # Adjust variable name as needed
 position_data_envB = data['envB314_524']  # Adjust variable name as needed
 
-position_data_envA[1:3] = position_data_envA[1:3]/100
+
+# Set parameters
+num_neurons = 80
+balance_values = parse_list(args.balance_values) if args.balance_values else [0.5]
+responsive_values = parse_list(args.responsive_values) if args.responsive_values else [0.5]
+percent_place_cells = parse_list(args.percent_place_cells) if args.percent_place_cells else [0.7]
+balance_zero_done = False
+responsive_zero_done = False
+
+
+
+# Define desired time steps for interpolation (e.g., at a fixed interval)
+# Interpolate for EnvA
+trial_markers_envA = position_data_envA[3, :]
+times_envA = position_data_envA[0]
+desired_time_stepsA = np.arange(min(times_envA), max(times_envA), step=1/75)  # Example: 75 Hz sampling rate
+interpolated_trial_markers_envA = map_trial_markers_to_interpolated_times(times_envA, trial_markers_envA, desired_time_stepsA)
+trial_markers_envA = interpolated_trial_markers_envA
+positions_envA = position_data_envA[1:3].T
+position_interp_func_envA = interp1d(times_envA, positions_envA, axis=0, kind="cubic", fill_value="extrapolate")
+interpolated_positions_envA = position_interp_func_envA(desired_time_stepsA)/100
+position_data_envA = np.column_stack((desired_time_stepsA,
+                                               interpolated_positions_envA[:, 0],  # x positions
+                                               interpolated_positions_envA[:, 1],  # y positions
+                                               trial_markers_envA))
+
+position_data_envA = position_data_envA.T
+
+# Interpolate for EnvB
+trial_markers_envB = position_data_envB[3, :]
+times_envB = position_data_envB[0]
+desired_time_stepsB = np.arange(min(times_envB), max(times_envB), step=1/75)  # Example: 75 Hz sampling rate
+interpolated_trial_markers_envB = map_trial_markers_to_interpolated_times(times_envB, trial_markers_envB, desired_time_stepsB)
+trial_markers_envB = interpolated_trial_markers_envB
+positions_envB = position_data_envB[1:3].T
+position_interp_func_envB = interp1d(times_envB, positions_envB, axis=0, kind="cubic", fill_value="extrapolate")
+interpolated_positions_envB = position_interp_func_envB(desired_time_stepsB)/100
+position_data_envB = np.column_stack((desired_time_stepsB,
+                                               interpolated_positions_envB[:, 0],  # x positions
+                                               interpolated_positions_envB[:, 1],  # y positions
+                                               trial_markers_envB))
+position_data_envB = position_data_envB.T
+
+#define environments
+
+position_data_envA[1:3] = position_data_envA[1:3]
 positions = position_data_envA[1:3].T
 max_x = np.max(positions[:, 0])
 max_y = np.max(positions[:, 1])
@@ -173,11 +221,8 @@ envA_params = {
     'boundary_conditions': 'solid'
 }
 
-
-
 envA = Environment(params=envA_params)
-
-position_data_envB[1:3] = position_data_envB[1:3]/100
+position_data_envB[1:3] = position_data_envB[1:3]
 positions = position_data_envB[1:3].T
 max_x = np.max(positions[:, 0])
 max_y = np.max(positions[:, 1])
@@ -191,31 +236,16 @@ envB_params = {
 }
 envB = Environment(params=envB_params)
 
-# Set parameters
-num_neurons = 80
-balance_values = parse_list(args.balance_values) if args.balance_values else [0.5]
-responsive_values = parse_list(args.responsive_values) if args.responsive_values else [0.5]
-percent_place_cells = parse_list(args.percent_place_cells) if args.percent_place_cells else [0.7]
-
-
-balance_zero_done = False
-responsive_zero_done = False
-
-
+#boot up the agents
 agentA = Agent(envA)
-times = position_data_envA[0]  # Timestamps
-positions = position_data_envA[1:3].T  # Positions (x, y)
-unique_times, indices = np.unique(times, return_index=True)
-unique_positions = positions[indices]
-agentA.import_trajectory(times=unique_times, positions=unique_positions)
-
+agentA.import_trajectory(times=desired_time_stepsA, positions=interpolated_positions_envA, interpolate=False)
 
 agentB = Agent(envB)
-times = position_data_envB[0]  # Timestamps
-positions = position_data_envB[1:3].T  # Positions (x, y)
-unique_times, indices = np.unique(times, return_index=True)
-unique_positions = positions[indices]
-agentB.import_trajectory(times=unique_times, positions=unique_positions)
+agentB.import_trajectory(times=desired_time_stepsB, positions=interpolated_positions_envB, interpolate=False)
+
+
+
+
 
 # Perform grid search over balance and responsive rates
 with open(results_filepath, "w") as results_file:
@@ -243,9 +273,9 @@ with open(results_filepath, "w") as results_file:
         tebc_responsive_neurons, cell_types = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
 
         # Profile the function
-        #cProfile.runctx('simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)', globals(), locals(), 'profile_stats.prof')
-        #p = pstats.Stats('profile_stats.prof')
-        #p.sort_stats('cumulative').print_stats(10)
+#        cProfile.runctx('simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values, cell_types)', globals(), locals(), 'profile_stats.prof')
+#        p = pstats.Stats('profile_stats.prof')
+#        p.sort_stats('cumulative').print_stats(10)
 
         # Now run the function normally to capture its output
         spikesA, eyeblink_neuronsA, response_envA, agentA = simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values, cell_types)
@@ -282,8 +312,6 @@ with open(results_filepath, "w") as results_file:
         '''
 
 
-
-
         #####save
         # Construct the full file paths
         filename_envA = f"response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
@@ -305,18 +333,50 @@ with open(results_filepath, "w") as results_file:
 
 
         envA_eyeblink = position_data_envA[3].T
-        response_envA = response_envA[envA_eyeblink > 0,:]
+        response_envA_test = response_envA[envA_eyeblink > 0,:]
         envA_eyeblink = envA_eyeblink[envA_eyeblink > 0]
         envA_eyeblink = np.where(envA_eyeblink <= 5, 1, 2)
 
         envB_eyeblink = position_data_envB[3].T
-        response_envB = response_envB[envB_eyeblink > 0,:]
+        response_envB_test = response_envB[envB_eyeblink > 0,:]
         envB_eyeblink = envB_eyeblink[envB_eyeblink > 0]
         envB_eyeblink = np.where(envB_eyeblink <= 5, 1, 2)
 
 
         #run cebra decoding
-        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA, envA_eyeblink, response_envB, envB_eyeblink)
+        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA_test, envA_eyeblink, response_envB_test, envB_eyeblink)
+
+
+        #run position decoding for env A
+        posA = position_data_envA[1:3].T
+        vel = eyeblink_neuronsA.smoothed_velocity
+        vel= np.array(vel)
+        indices = np.where(vel > 0.02)[0]
+        posA = posA[indices]
+        response_envA = response_envA[indices]
+
+        filename_envA = f"ratinabox_pos"
+        full_path_envA = os.path.join('/Users/Hannah/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
+        np.save(full_path_envA, posA)
+
+        filename_envA = f"ratinabox_spikes"
+        full_path_envA = os.path.join('/Users/Hannah/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
+        np.save(full_path_envA, response_envA)
+
+
+        err_allA, err_all_shuffA = pos_decoding_self(response_envA, posA, .75)
+
+
+        #run position decoding for env B
+        posB = position_data_envB[1:3].T
+        vel = eyeblink_neuronsB.smoothed_velocity
+        vel= np.array(vel)
+        indices = np.where(vel > 0.02)[0]
+        posB = posB[indices]
+        response_envB = response_envB[indices]
+
+        err_allB, err_all_shuffB = pos_decoding_self(response_envB, posB, .75)
+
 
         # Construct the identifier for this iteration
         identifier = f"{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_PCs_{args.percent_place_cells}.npy"

@@ -45,8 +45,12 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
     last_CS_time = None
     last_US_time = None
 
+
     times = position_data[0, :]
     trial_markers = position_data[3, :]
+
+    coefficients = [-3.26092478e-04, 1.74074978e-02, 8.36619150e-02, 1.16059441]
+    firing_rate_function = np.poly1d(coefficients)
 
     for index, (current_time, trial_marker) in enumerate(zip(times, trial_markers)):
         agent.update()
@@ -64,11 +68,9 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
             place_firing = 0
         else:
             FR = np.array(PCs.history['firingrate'][-1])
-            coefficients = [-3.26092478e-04, 1.74074978e-02, 8.36619150e-02, 1.16059441]
-            firing_rate_function = np.poly1d(coefficients)
-            FR_mod = firing_rate_function(vel*100)
-            place_firing = FR*(FR_mod/7.5)
-            place_firing[indices_to_zero_out] = 0.0027
+            FR_mod = firing_rate_function(vel * 100)
+            place_firing = FR * (FR_mod / 75)
+            place_firing[indices_to_zero_out] = 0.02 / 75
             if eyeblink_neurons.balance_distribution[0] != 100:
                 place_firing = (1 - eyeblink_neurons.balance_distribution) * place_firing
 

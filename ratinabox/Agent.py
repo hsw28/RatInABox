@@ -160,6 +160,7 @@ class Agent:
             pprint.pprint(all_default_params)
         return all_default_params
 
+
     def update(self, dt=None, drift_velocity=None, drift_to_random_strength_ratio=1):
         """Movement policy update.
         In principle this does a very simple thing:
@@ -438,7 +439,7 @@ class Agent:
                     self.times
                 )
 
-        self.update_head_direction(dt=dt)
+        #self.update_head_direction(dt=dt) #COMMENTING OUT
 
         if len(self.history["pos"]) >= 1:
             self.distance_travelled += np.linalg.norm(

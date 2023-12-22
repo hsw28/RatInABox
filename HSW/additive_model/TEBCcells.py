@@ -91,14 +91,14 @@ class TEBC(PlaceCells):
                 response_func = response_profiles[cell_type]['response_func']
                 baseline = response_profiles[cell_type]['baseline']
                 tebc_response = response_func(time_since_CS)
+                if current_velocity > .02:
+                    self.firing_rates[i] = self.firing_rates[i]-baseline
 
             if self.balance_distribution[0] == 100:
                 self.firing_rates[i] = tebc_response
             else:
                 self.firing_rates[i] = (self.balance_distribution[i] * tebc_response)
 
-            if current_velocity > .02:
-                self.firing_rates[i] = self.firing_rates[i]-baseline
 
         self.save_to_history()
         return self.firing_rates
