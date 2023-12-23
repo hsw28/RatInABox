@@ -124,7 +124,9 @@ percent_place_cells_values = parse_list(args.percent_place_cells)
 optional_param = args.optional_param
 
 # Determine if the optional parameter is provided
-work = optional_param is not None
+work = False
+if optional_param is not None:
+    work = True
 
 
 if work:
