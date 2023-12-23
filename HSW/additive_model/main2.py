@@ -375,14 +375,14 @@ with open(results_filepath, "w") as results_file:
 
         filename_envA = f"ratinabox_pos"
         if work:
-            full_path_envA = os.path.join('/home/hsw967/Hannah/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
+            full_path_envA = os.path.join('/home/hsw967/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
         else:
             full_path_envA = os.path.join('/Users/Hannah/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
         np.save(full_path_envA, posA)
 
         filename_envA = f"ratinabox_spikes"
         if work:
-            full_path_envA = os.path.join('/home/hsw967/Hannah/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
+            full_path_envA = os.path.join('/home/hsw967/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
         else:
             full_path_envA = os.path.join('/Users/Hannah/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
         np.save(full_path_envA, response_envA)
