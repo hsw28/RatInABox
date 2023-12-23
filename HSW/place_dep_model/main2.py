@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import sys
 sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
+
 from cond_decoding_AvsB import cond_decoding_AvsB
 from pos_decoding_self import pos_decoding_self
 from cebra import CEBRA
