@@ -373,6 +373,7 @@ with open(results_filepath, "w") as results_file:
         posA = posA[indices]
         response_envA = response_envA[indices]
 
+        '''
         filename_envA = f"ratinabox_pos"
         if work:
             full_path_envA = os.path.join('/home/hsw967/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
@@ -389,7 +390,7 @@ with open(results_filepath, "w") as results_file:
 
 
         err_allA, err_all_shuffA = pos_decoding_self(response_envA, posA, .75)
-
+        '''
 
         #run position decoding for env B
         posB = position_data_envB[1:3].T
