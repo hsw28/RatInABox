@@ -174,7 +174,7 @@ def get_distribution_values(dist_type, params, size):
 
 # Load MATLAB file and extract position data
 if work:
-    save_directory = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'
+    matlab_file_path = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'
 else:
     matlab_file_path = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'  # Replace with your MATLAB file path
 data = scipy.io.loadmat(matlab_file_path)
