@@ -105,6 +105,7 @@ parser.add_argument('--responsive_values', type=str, help='List of responsive ra
 parser.add_argument('--responsive_type', choices=['fixed', 'binomial', 'normal', 'poisson'], default='fixed', help='Type of distribution for responsive rate')
 parser.add_argument('--percent_place_cells', type=str, required=True, help='Percentage of place cells (single value or comma-separated list)')
 parser.add_argument('--holdovers', type=str, required=True, help='if you want TEBC cells held over from env A')
+parser.add_argument('--optional_param', type=str, help='Optional parameter for additional functionality')
 args = parser.parse_args()
 
 # Process the arguments
@@ -112,14 +113,26 @@ args = parser.parse_args()
 responsive_values = parse_list(args.responsive_values)
 percent_place_cells_values = parse_list(args.percent_place_cells)
 holdovers = parse_list(args.holdovers)
+optional_param = args.optional_param
 
 
-save_directory = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/results'
-ratinabox.figure_directory = save_directory
-os.makedirs(save_directory, exist_ok=True)
+# Determine if the optional parameter is provided
+work = False
+if optional_param is not None:
+    work = True
+
+
+if work:
+    save_directory = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/results'
+    ratinabox.figure_directory = save_directory
+    os.makedirs(save_directory, exist_ok=True)
+else:
+    save_directory = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/results'
+    ratinabox.figure_directory = save_directory
+    os.makedirs(save_directory, exist_ok=True)
 
 # Construct the filename
-results_filename = f"grid_search_results-response-{args.responsive_values}-{args.responsive_type}-PCs-{args.percent_place_cells}.txt"
+results_filename = f"PDM_grid_search_results-response-{args.responsive_values}-{args.responsive_type}-PCs-{args.percent_place_cells}.txt"
 results_filepath = os.path.join(save_directory, results_filename)
 
 def parse_list(arg_value):
@@ -159,7 +172,11 @@ def get_distribution_values(dist_type, params, size):
 
 
 # Load MATLAB file and extract position data
-matlab_file_path = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'  # Replace with your MATLAB file path
+# Load MATLAB file and extract position data
+if work:
+    matlab_file_path = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'
+else:
+    matlab_file_path = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'  # Replace with your MATLAB file path
 data = scipy.io.loadmat(matlab_file_path)
 position_data_envA = data['envA314_522']  # Adjust variable name as needed
 position_data_envB = data['envB314_524']  # Adjust variable name as needed
@@ -361,7 +378,8 @@ with open(results_filepath, "w") as results_file:
         posA = posA[indices]
         response_envA = response_envA[indices]
 
-        err_allA, err_all_shuffA = pos_decoding_self(response_envA, posA, .75)
+
+        pos_test_scoreA, pos_test_errA, dis_meanA, dis_medianA, pos_test_score_shuffA, pos_test_err_shuffA, dis_mean_shuffA, dis_median_shuffA = pos_decoding_self(response_envA, posA, .70)
 
 
         #run position decoding for env B
@@ -372,7 +390,8 @@ with open(results_filepath, "w") as results_file:
         posB = posB[indices]
         response_envB = response_envB[indices]
 
-        err_allB, err_all_shuffB = pos_decoding_self(response_envB, posB, .75)
+        pos_test_scoreB, pos_test_errB, dis_meanB, dis_medianB, pos_test_score_shuffB, pos_test_err_shuffB, dis_mean_shuffB, dis_median_shuffB = pos_decoding_self(response_envB, posB, .70)
+
 
 
 

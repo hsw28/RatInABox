@@ -86,18 +86,19 @@ class TEBC(PlaceCells):
 
         for i in range(self.num_neurons):
             tebc_response = 0
+
+
             if self.tebc_responsive_neurons[i]:
                 cell_type = self.cell_types[i]
                 response_func = response_profiles[cell_type]['response_func']
                 baseline = response_profiles[cell_type]['baseline']
-                tebc_response = response_func(time_since_CS)
-                if current_velocity > .02:
-                    self.firing_rates[i] = self.firing_rates[i]-baseline
+                tebc_response = response_func(time_since_CS, baseline)
 
-            if self.balance_distribution[0] == 100:
-                self.firing_rates[i] = tebc_response
+            # Apply the balance distribution if it's meant to be a factor
+            if self.balance_distribution[0] != 100:
+                self.firing_rates[i] = baseline + (self.balance_distribution[i] / 100) * (tebc_response - baseline)
             else:
-                self.firing_rates[i] = (self.balance_distribution[i] * tebc_response)
+                self.firing_rates[i] = tebc_response
 
 
         self.save_to_history()

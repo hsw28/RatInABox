@@ -141,7 +141,7 @@ else:
     os.makedirs(save_directory, exist_ok=True)
 
 # Construct the filename
-results_filename = f"grid_search_results-balance-{args.balance_values}-{args.balance_dist}-std-{args.balance_std}-response-{args.responsive_values}-{args.responsive_type}-PCs-{args.percent_place_cells}.txt"
+results_filename = f"AM_grid_search_results-balance-{args.balance_values}-{args.balance_dist}-std-{args.balance_std}-response-{args.responsive_values}-{args.responsive_type}-PCs-{args.percent_place_cells}.txt"
 results_filepath = os.path.join(save_directory, results_filename)
 
 def parse_list(arg_value):
@@ -177,6 +177,7 @@ if work:
     matlab_file_path = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'
 else:
     matlab_file_path = '/Users/Hannah/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'  # Replace with your MATLAB file path
+
 data = scipy.io.loadmat(matlab_file_path)
 position_data_envA = data['envA314_522']  # Adjust variable name as needed
 position_data_envB = data['envB314_524']  # Adjust variable name as needed
@@ -337,13 +338,13 @@ with open(results_filepath, "w") as results_file:
         # Save the response arrays to files
 
 
-        np.save(full_path_envA, spikesA)
-        np.save(full_path_envB, spikesB)
-        #np.save(full_path_envA, firingrate_envA)
-        #np.save(full_path_envB, firingrate_envB)
+        #np.save(full_path_envA, spikesA)
+        #np.save(full_path_envB, spikesB)
+        np.save(full_path_envA, firingrate_envA)
+        np.save(full_path_envB, firingrate_envB)
 
         ######
-
+        '''
         # Assess learning transfer and other metrics
         #organize to run in cebra
         response_envA = np.transpose(spikesA)
@@ -361,18 +362,7 @@ with open(results_filepath, "w") as results_file:
         envB_eyeblink = np.where(envB_eyeblink <= 5, 1, 2)
 
 
-        #run cebra decoding
-        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA_test, envA_eyeblink, response_envB_test, envB_eyeblink)
-
-
-        #run position decoding for env A
-        posA = position_data_envA[1:3].T
-        vel = eyeblink_neuronsA.smoothed_velocity
-        vel= np.array(vel)
-        indices = np.where(vel > 0.02)[0]
-        posA = posA[indices]
-        response_envA = response_envA[indices]
-
+        '''
         '''
         filename_envA = f"ratinabox_pos"
         if work:
@@ -387,10 +377,22 @@ with open(results_filepath, "w") as results_file:
         else:
             full_path_envA = os.path.join('/Users/Hannah/Programming/data_eyeblink/rat314/trainingdata', filename_envA)
         np.save(full_path_envA, response_envA)
-
-
-        err_allA, err_all_shuffA = pos_decoding_self(response_envA, posA, .75)
         '''
+        '''
+
+        #run cebra decoding
+        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA_test, envA_eyeblink, response_envB_test, envB_eyeblink)
+
+
+        #run position decoding for env A
+        posA = position_data_envA[1:3].T
+        vel = eyeblink_neuronsA.smoothed_velocity
+        vel= np.array(vel)
+        indices = np.where(vel > 0.02)[0]
+        posA = posA[indices]
+        response_envA = response_envA[indices]
+        #pos_test_scoreA, pos_test_errA, dis_meanA, dis_medianA, pos_test_score_shuffA, pos_test_err_shuffA, dis_mean_shuffA, dis_median_shuffA = pos_decoding_self(response_envA, posA, .70)
+
 
         #run position decoding for env B
         posB = position_data_envB[1:3].T
@@ -399,9 +401,11 @@ with open(results_filepath, "w") as results_file:
         indices = np.where(vel > 0.02)[0]
         posB = posB[indices]
         response_envB = response_envB[indices]
+        #pos_test_scoreB, pos_test_errB, dis_meanB, dis_medianB, pos_test_score_shuffB, pos_test_err_shuffB, dis_mean_shuffB, dis_median_shuffB = pos_decoding_self(response_envB, posB, .70)
 
-        err_allB, err_all_shuffB = pos_decoding_self(response_envB, posB, .75)
 
+        #POS DECODE
+        err_allA, err_allB_usingA, err_all_shuffA, err_all_shuffB_usingA, err_allB_usingB = pos_decoding_AvsB(response_envA, posA, response_envB, posB, .7)
 
         # Construct the identifier for this iteration
         identifier = f"{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_PCs_{args.percent_place_cells}.npy"
@@ -410,9 +414,14 @@ with open(results_filepath, "w") as results_file:
         results_file.write(f"Parameters: {identifier}\n")
         results_file.write(f"fract_control_all: {fract_control_all}\n")
         results_file.write(f"fract_test_all: {fract_test_all}\n")
+        results_file.write(f"pos decoding A: {err_allA}\n")
+        results_file.write(f"pos decoding A shuffled: {err_all_shuffA}\n")
+        results_file.write(f"pos decoding B using A: {err_allB_usingA}\n")
+        results_file.write(f"pos decoding B shuffled: {err_all_shuffB_usingA}\n")
+        results_file.write(f"pos decoding B: {err_allB_usingB}\n")
         results_file.write("\n")  # Add a newline for readability
 
 
         # Print confirmation
-
+        '''
         print(f"Saved results to {full_path_envA} and {full_path_envB}")
