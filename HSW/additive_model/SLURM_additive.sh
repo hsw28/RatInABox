@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:a100:1
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=16GB
+#SBATCH --mem=128GB
 #SBATCH --time=48:00:00
 #SBATCH --output=SLURM_errors.out ## standard out and standard error goes to this file
 
