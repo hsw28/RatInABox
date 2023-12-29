@@ -27,6 +27,7 @@ import cProfile
 import pstats
 import random
 import datetime
+import gc
 
 
 
@@ -476,6 +477,14 @@ with open(results_filepath, "w") as results_file:
                     *err_allA, *err_allB_usingA, *err_all_shuffA, *err_all_shuffB_usingA, *err_allB_usingB
                 ])
 
+            # At the end of each iteration, explicitly delete large objects
+            # Example: if `spikesA` and `spikesB` are large, you can delete them
+            del spikesA, spikesB, firingrate_envA, firingrate_envB
+            del response_envA, response_envB
+            del envA_eyeblink, envB_eyeblink
+
+            # Call garbage collector
+            gc.collect()
             run_count += 1
 
             # Print confirmation
