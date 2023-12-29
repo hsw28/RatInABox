@@ -3,6 +3,7 @@ import pandas as pd
 import random
 from ratinabox.Neurons import Neurons, PlaceCells
 from tebc_response2 import response_profiles
+from tebc_response2 import linear_decay_response
 
 '''
 Python class template for CombinedPlaceTebcNeurons that integrates both place cell and tEBC
@@ -83,16 +84,15 @@ class TEBC(PlaceCells):
         # Check the current smoothed velocity
         current_velocity = self.smoothed_velocity[current_index] if current_index < len(self.smoothed_velocity) else 0
 
-
         for i in range(self.num_neurons):
             tebc_response = 0
-
 
             if self.tebc_responsive_neurons[i]:
                 cell_type = self.cell_types[i]
                 response_func = response_profiles[cell_type]['response_func']
                 baseline = response_profiles[cell_type]['baseline']
-                tebc_response = response_func(time_since_CS, baseline)
+                tebc_response = response_func(time_since_CS)
+
 
             # Apply the balance distribution if it's meant to be a factor
             if self.balance_distribution[0] != 100:

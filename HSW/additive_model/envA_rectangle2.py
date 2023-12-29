@@ -85,7 +85,7 @@ def simulate_envA(agent, position_data, balance_distribution, responsive_distrib
 
 
         #combine
-        firing_rates[:, index] = tebc_firing + place_firing #this is per 1/7.5 seconds
+        firing_rates[:, index] = tebc_firing + place_firing + np.random.normal(-0.02/30, 0.02/30)
 
 
 

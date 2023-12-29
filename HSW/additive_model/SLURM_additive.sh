@@ -17,4 +17,4 @@ export PYTHONPATH="${PYTHONPATH}:/home/hsw967/Programming/RatInABox"
 export PYTHONPATH="${PYTHONPATH}:/home/hsw967/Programming/Hannahs-CEBRAs"
 
 
-python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 0.5 --balance_dist fixed --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7 --optional_param work
+python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7 --num_iters 1 --optional_param work

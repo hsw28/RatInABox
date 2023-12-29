@@ -1,8 +1,8 @@
 todo:
 
-- re check all cell types for additive model
+
 - fix cell types for dependant based on additive additive_model
 - check cell types for dependant and place models
-- make sure decoding works
+
 - adjsut how decoding values are saved
 - make everything a loop

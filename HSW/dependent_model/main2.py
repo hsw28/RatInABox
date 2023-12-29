@@ -333,9 +333,8 @@ with open(results_filepath, "w") as results_file:
         filename_envB = f"DM_response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
         full_path_envA = os.path.join(save_directory, filename_envA)
         full_path_envB = os.path.join(save_directory, filename_envB)
+
         # Save the response arrays to files
-
-
         #np.save(full_path_envA, spikesA)
         #np.save(full_path_envB, spikesB)
         np.save(full_path_envA, firingrate_envA)
