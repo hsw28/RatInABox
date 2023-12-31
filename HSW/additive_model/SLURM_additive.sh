@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --mem=243GB
 #SBATCH --time=48:00:00
-#SBATCH --output=SLURM_errors.out ## standard out and standard error goes to this file
+#SBATCH --output=SLURM_errors2.out ## standard out and standard error goes to this file
 
 
 module purge
