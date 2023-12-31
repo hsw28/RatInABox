@@ -1,3 +1,9 @@
+import sys
+
+# Reconfigure stdout for immediate flushing
+sys.stdout.reconfigure(line_buffering=True, write_through=True)
+
+sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
 import numpy as np
 import scipy.io
 import argparse
@@ -17,8 +23,6 @@ import os
 import ratinabox
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-import sys
-sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
 from cond_decoding_AvsB import cond_decoding_AvsB
 from pos_decoding_self import pos_decoding_self
 from pos_decoding_AvsB import pos_decoding_AvsB
@@ -106,7 +110,6 @@ Requirements:
     - Adjust environment settings and neuron parameters as needed in the script.
 """
 
-print("point 1")
 # Function to process the list-like arguments
 def parse_list(arg_value):
     if ',' in arg_value:
@@ -141,7 +144,6 @@ work = False
 if optional_param is not None:
     work = True
 
-print("point 2")
 if work:
     save_directory = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/results'
     ratinabox.figure_directory = save_directory
@@ -155,7 +157,6 @@ else:
 results_filename = f"AM_grid_search_results-balance-{args.balance_values}-{args.balance_dist}-std-{args.balance_std}-response-{args.responsive_values}-{args.responsive_type}-PCs-{args.percent_place_cells}.txt"
 results_filepath = os.path.join(save_directory, results_filename)
 
-print("point 3")
 def parse_list(arg_value):
     if isinstance(arg_value, list):
         return [float(item) for item in arg_value]
@@ -183,7 +184,6 @@ def get_distribution_values(dist_type, params, size):
 
 
 
-print("point 4")
 # Load MATLAB file and extract position data
 if work:
     matlab_file_path = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'
@@ -194,7 +194,6 @@ data = scipy.io.loadmat(matlab_file_path)
 position_data_envA = data['envA314_522']  # Adjust variable name as needed
 position_data_envB = data['envB314_524']  # Adjust variable name as needed
 
-print("point 5")
 # Set parameters
 num_neurons = 80
 balance_values = parse_list(args.balance_values) if args.balance_values else [0.5]
@@ -235,7 +234,6 @@ position_data_envB = np.column_stack((desired_time_stepsB,
                                                trial_markers_envB))
 position_data_envB = position_data_envB.T
 
-print("point 6")
 #define environments
 
 position_data_envA[1:3] = position_data_envA[1:3]
@@ -279,7 +277,6 @@ total_runs = len(balance_values) * len(responsive_values) * len(percent_place_ce
 num_columns = 25  # Adjust this based on the number of parameters and metrics
 results_matrix = np.zeros((total_runs, num_columns))
 
-print("point 7")
 # Column headers
 headers = [
     "balance_value", "balance_dist", "responsive_val", "responsive_type",
@@ -296,7 +293,6 @@ run_count = 0
 
 
 
-print("point 8")
 # Perform grid search over balance and responsive rates
 with open(results_filepath, "w") as results_file:
     for balance_value, responsive_val, percent_place_cell in itertools.product(balance_values, responsive_values, percent_place_cells):
