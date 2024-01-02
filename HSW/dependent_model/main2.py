@@ -106,26 +106,6 @@ Requirements:
     - Adjust environment settings and neuron parameters as needed in the script.
 """
 
-####FOR SLURM
-def parse_commandline():
-    """Parse the arguments given on the command-line.
-    """
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--filename",
-                       help="Name of file",
-                       default=None)
-
-
-    args = parser.parse_args()
-
-    return args
-
-if __name__ == '__main__':
-    args = parse_commandline()
-    #time.sleep(10) # Sleep for 3 seconds
-    print(args.filename)
-
-#####END SLURM
 
 
 # Function to process the list-like arguments
@@ -135,7 +115,7 @@ def parse_list(arg_value):
     else:
         return float(arg_value)
 
-# Parse command-line arguments
+# Combine argument parsing for SLURM and script-specific arguments
 parser = argparse.ArgumentParser(description='Simulation Script for Neuronal Firing Rate Analysis')
 parser.add_argument('--balance_values', type=str, help='List of balance values or means for Gaussian distribution')
 parser.add_argument('--balance_dist', choices=['fixed', 'gaussian', 'additive'], default='fixed', help='Distribution type for balance')
@@ -143,8 +123,9 @@ parser.add_argument('--balance_std', type=float, default=0.1, help='Standard dev
 parser.add_argument('--responsive_values', type=str, help='List of responsive rates or probabilities for distributions')
 parser.add_argument('--responsive_type', choices=['fixed', 'binomial', 'normal', 'poisson'], default='fixed', help='Type of distribution for responsive rate')
 parser.add_argument('--percent_place_cells', type=str, required=True, help='Percentage of place cells (single value or comma-separated list)')
-parser.add_argument('--num_iters', type=int, default=1, help='optional parameter for number of iterations')
+parser.add_argument('--num_iters', type=int, default=1, help='Number of iterations')
 parser.add_argument('--optional_param', type=str, help='Optional parameter for additional functionality')
+
 args = parser.parse_args()
 
 # Process the arguments

@@ -20,8 +20,6 @@ source activate ratinabox
 export PYTHONPATH="${PYTHONPATH}:/home/hsw967/Programming/RatInABox"
 export PYTHONPATH="${PYTHONPATH}:/home/hsw967/Programming/Hannahs-CEBRAs"
 
-# Read input arguments from file
-IFS=$'\n' read -d '' -r -a input_args < input_args.txt
 
 # Run the Python script with the argument corresponding to the SLURM_ARRAY_TASK_ID
-python /home/hsw967/Programming/RatInABox/HSW/dependent_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.2,.4,.6,.8,1 --responsive_type fixed --percent_place_cells .2,.4,.6,.8,1 --num_iters 5 --optional_param work --filename ${input_args[$SLURM_ARRAY_TASK_ID]}
+python /home/hsw967/Programming/RatInABox/HSW/dependent_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.2,.4,.6,.8,1 --responsive_type fixed --percent_place_cells .2,.4,.6,.8,1 --num_iters 5 --optional_param work 
