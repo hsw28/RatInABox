@@ -49,14 +49,14 @@ def cell_type_4_response(time_since_CS, baseline, cs_peak, us_peak, cs_sd, us_sd
         slope = (cs_peak-baseline)/.73
         total_response =  slope * (time_since_CS-.05) + baseline
     if .78<time_since_CS<=1:
-        total_response = (.08/24) * np.exp(-((time_since_CS - .78) ** 2) / (5 * us_sd ** 5)) + baseline
+        total_response = us_peak * np.exp(-((time_since_CS - .78) ** 2) / (5 * us_sd ** 5)) + baseline
     # After the US duration, return to baseline
     if 1<time_since_CS<=3:
-        total_response = .03/24
+        total_response = cs_peak
     if time_since_CS>=3:
         total_response = baseline
-    if total_response<.03/24:
-        total_response = .03/24
+    if total_response<cs_peak:
+        total_response = cs_peak
     if total_response>us_peak:
         total_response = us_peak
     return total_response
@@ -115,7 +115,7 @@ def type8decay(time_since_CS, baseline):
         return baseline
 
 
-
+.065/24
 
 
 
@@ -124,7 +124,7 @@ response_profiles = {
     1: {'response_func': lambda t, baseline=.07/24: bimodal_response(t, [.15/24, .4/24], [0.3, .85], [0.1, 0.1], baseline, CS_duration, US_duration), 'baseline': .07/24},
     2: {'response_func': lambda t, baseline=.07/24: gaussian_peak2(t, .22/24, US_start_time, 0.15, US_duration, baseline), 'baseline': .07/24},
     3: {'response_func': lambda t, baseline=.06/24: linear_decay_response(t,peak_time=0,mid_time=.2,end_time=.85,baseline=baseline,first_decrement=0.02/24,second_decrement=0.01/24),'baseline': 0.06/24},
-    4: {'response_func': lambda t, baseline=.075/24: cell_type_4_response(t, baseline=baseline, cs_peak=0.03/24, us_peak=0.085/24, cs_sd=0.1, us_sd=0.2, cs_decay_start=.25, us_peak_time=.75, us_duration=0.1), 'baseline': 0.075/24},
+    4: {'response_func': lambda t, baseline=.075/24: cell_type_4_response(t, baseline=baseline, cs_peak=0.03/24, us_peak=0.08/24, cs_sd=0.1, us_sd=0.2, cs_decay_start=.25, us_peak_time=.75, us_duration=0.1), 'baseline': 0.075/24},
     5: {'response_func': lambda t, baseline=.035/24: cell_type_5_response(t, baseline=baseline, us_peak=0.11/24, us_duration=US_duration), 'baseline': 0.035/24},
     6: {'response_func': lambda t, baseline=.04/24: noisy_uniform_response(t, baseline), 'baseline': .04/24},
     7: {'response_func': lambda t, baseline=.042/24: bimodal_response2(t, [.07/24, .09/24], [0.3, US_start_time+.05], [0.08, 0.15], baseline, cs_duration=.25, us_duration=.1), 'baseline': .042/24},

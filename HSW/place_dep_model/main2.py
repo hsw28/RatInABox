@@ -1,3 +1,9 @@
+import sys
+
+# Reconfigure stdout for immediate flushing
+sys.stdout.reconfigure(line_buffering=True, write_through=True)
+
+sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
 import numpy as np
 import scipy.io
 import argparse
@@ -17,15 +23,15 @@ import os
 import ratinabox
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-import sys
-sys.path.append('/Users/Hannah/Programming/Hannahs-CEBRAs')
-
 from cond_decoding_AvsB import cond_decoding_AvsB
 from pos_decoding_self import pos_decoding_self
+from pos_decoding_AvsB import pos_decoding_AvsB
 from cebra import CEBRA
 import cProfile
 import pstats
 import random
+import datetime
+import gc
 
 
 

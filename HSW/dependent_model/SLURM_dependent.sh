@@ -8,7 +8,7 @@
 #SBATCH --mem=220GB
 #SBATCH --time=24:00:00
 #SBATCH --job-name="sample_job_\${SLURM_ARRAY_TASK_ID}" ## use the task id in the name of the job
-#SBATCH --output=AM_SLURM_out.%A_%a.out ## use the jobid (A) and the specific job index (a) to name your log file
+#SBATCH --output=DM_SLURM_out.%A_%a.out ## use the jobid (A) and the specific job index (a) to name your log file
 #SBATCH --mail-type=ALL ## you can receive e-mail alerts from SLURM when your job begins and when your job finishes (completed, failed, etc)
 #SBATCH --mail-user=hsw@northwestern.edu  ## your email
 
@@ -26,4 +26,4 @@ export PYTHONPATH="${PYTHONPATH}:/home/hsw967/Programming/Hannahs-CEBRAs"
 IFS=$'\n' read -d '' -r -a input_args < input_args.txt
 
 # Run the Python script with the argument corresponding to the SLURM_ARRAY_TASK_ID
-python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.2,.4,.6,.8,1 --responsive_type fixed --percent_place_cells .2,.4,.6,.8,1 --num_iters 5 --optional_param work --input_file "${input_args[$SLURM_ARRAY_TASK_ID]}"
+python /home/hsw967/Programming/RatInABox/HSW/dependent_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.2,.4,.6,.8,1 --responsive_type fixed --percent_place_cells .2,.4,.6,.8,1 --num_iters 5 --optional_param work --input_file "${input_args[$SLURM_ARRAY_TASK_ID]}"
