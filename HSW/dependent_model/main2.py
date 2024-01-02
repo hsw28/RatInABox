@@ -357,7 +357,7 @@ with open(results_filepath, "w") as results_file:
 
 
             #####save
-
+            '''
             # Construct the full file paths
             filename_envA = f"DM_response_envA_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
             filename_envB = f"DM_response_envB_balance_{balance_value}_{args.balance_dist}_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}.npy"
@@ -370,7 +370,7 @@ with open(results_filepath, "w") as results_file:
             np.save(full_path_envA, firingrate_envA)
             np.save(full_path_envB, firingrate_envB)
             ######
-            
+            '''
 
             # Assess learning transfer and other metrics
             #organize to run in cebra
