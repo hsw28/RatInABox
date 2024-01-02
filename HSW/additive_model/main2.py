@@ -32,6 +32,8 @@ import pstats
 import random
 import datetime
 import gc
+import time
+
 
 
 
@@ -109,6 +111,28 @@ Requirements:
     - Replace 'path_to_your_matlab_file.mat' with the actual path to your MATLAB file.
     - Adjust environment settings and neuron parameters as needed in the script.
 """
+
+
+####FOR SLURM
+def parse_commandline():
+    """Parse the arguments given on the command-line.
+    """
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--filename",
+                       help="Name of file",
+                       default=None)
+
+
+    args = parser.parse_args()
+
+    return args
+
+if __name__ == '__main__':
+    args = parse_commandline()
+    #time.sleep(10) # Sleep for 3 seconds
+    print(args.filename)
+
+#####END SLURM
 
 # Function to process the list-like arguments
 def parse_list(arg_value):
