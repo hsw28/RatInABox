@@ -13,8 +13,6 @@
 #SBATCH --mail-user=hsw@northwestern.edu  ## your email
 
 
-printenv
-
 module purge
 eval "$(conda shell.bash hook)"
 source activate ratinabox
