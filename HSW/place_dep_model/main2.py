@@ -32,6 +32,7 @@ import pstats
 import random
 import datetime
 import gc
+import time
 
 
 
@@ -68,19 +69,21 @@ Arguments:
                         Default is 'fixed'.
     --percent_place_cells: what percent of place cells you want
     -- holdover: put a 1 if you want the same TEBC responsive cells in A and B. Any other value means no
+        -- num_iters: number of iterations (optional, default is 1)
+
 
 Examples:
-    python main2.py --responsive_values 0.4,0.6,0.8 --responsive_type binomial --percent_place_cells .7 --holdovers 1
+    python main2.py --responsive_values 0.4,0.6,0.8 --responsive_type binomial --percent_place_cells .7 --holdovers 1 --num_iters 4
 
-    python main2.py --responsive_values 0.4,0.6 --responsive_type binomial --percent_place_cells .7 --holdovers 5
+    python main2.py --responsive_values 0.4,0.6 --responsive_type binomial --percent_place_cells .7 --holdovers 5 --num_iters 4
 
-    python main2.py --responsive_values 0.4 --responsive_type binomial --percent_place_cells .7 --holdovers 1
+    python main2.py --responsive_values 0.4 --responsive_type binomial --percent_place_cells .7 --holdovers 1 --num_iters 4
 
-    python main2.py  --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7 --holdovers 1
+    python main2.py  --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7 --holdovers 1 --num_iters 4
 
-    python main2.py --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7 --holdovers 1
+    python main2.py --responsive_values 0.5 --responsive_type fixed --percent_place_cells .7 --holdovers 1 --num_iters 4 --optional_param work
 
-    python main2.py --responsive_values .25,.5,.75,1 --responsive_type fixed --percent_place_cells 1,.85,.7,.55 --holdovers 2
+    python main2.py --responsive_values .25,.5,.75,1 --responsive_type fixed --percent_place_cells 1,.85,.7,.55 --holdovers 2 --num_iters 4 --optional_param work
 
 
 Description:
@@ -111,6 +114,7 @@ parser.add_argument('--responsive_values', type=str, help='List of responsive ra
 parser.add_argument('--responsive_type', choices=['fixed', 'binomial', 'normal', 'poisson'], default='fixed', help='Type of distribution for responsive rate')
 parser.add_argument('--percent_place_cells', type=str, required=True, help='Percentage of place cells (single value or comma-separated list)')
 parser.add_argument('--holdovers', type=str, required=True, help='if you want TEBC cells held over from env A')
+parser.add_argument('--num_iters', type=int, default=1, help='optional parameter for number of iterations')
 parser.add_argument('--optional_param', type=str, help='Optional parameter for additional functionality')
 args = parser.parse_args()
 
@@ -120,6 +124,7 @@ responsive_values = parse_list(args.responsive_values)
 percent_place_cells_values = parse_list(args.percent_place_cells)
 holdovers = parse_list(args.holdovers)
 optional_param = args.optional_param
+num_iters = args.num_iters
 
 
 # Determine if the optional parameter is provided
@@ -168,16 +173,6 @@ def get_distribution_values(dist_type, params, size):
 
 
 
-
-
-
-
-
-
-
-
-
-# Load MATLAB file and extract position data
 # Load MATLAB file and extract position data
 if work:
     matlab_file_path = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/pos314.mat'
@@ -266,8 +261,27 @@ agentA.import_trajectory(times=desired_time_stepsA, positions=interpolated_posit
 agentB = Agent(envB)
 agentB.import_trajectory(times=desired_time_stepsB, positions=interpolated_positions_envB, interpolate=False)
 
-count = np.sum(trial_markers_envB > 0)
-print(count)
+# Calculate the total number of runs
+total_runs = len(responsive_values) * len(percent_place_cells) * num_iters
+num_columns = 24  # Adjust this based on the number of parameters and metrics
+results_matrix = np.zeros((total_runs, num_columns))
+
+
+
+# Column headers
+headers = [
+    "responsive_val",
+    "percent_place_cells", "fract_control_all", "fract_test_all",
+    "err_allA_score", "err_allA_err", "err_allA_mean", "err_allA_median",
+    "err_allB_usingA_score", "err_allB_usingA_err", "err_allB_usingA_mean", "err_allB_usingA_median",
+    "err_all_shuffA_score", "err_all_shuffA_err", "err_all_shuffA_mean", "err_all_shuffA_median",
+    "err_all_shuffB_usingA_score", "err_all_shuffB_usingA_err", "err_all_shuffB_usingA_mean", "err_all_shuffB_usingA_median",
+    "err_allB_usingB_score", "err_allB_usingB_err", "err_allB_usingB_mean", "err_allB_usingB_median"
+]
+
+
+run_count = 0
+
 
 # Perform grid search over balance and responsive rates
 with open(results_filepath, "w") as results_file:
@@ -283,139 +297,188 @@ with open(results_filepath, "w") as results_file:
             print("holdovers off")
             args.holdover_type = "off"
 
-        if responsive_val == 0:
-            if responsive_zero_done and len(responsive_values) > 1:
-                continue
-            responsive_zero_done = True
+        for i in range(num_iters):
+            if responsive_val == 0:
+                if responsive_zero_done and len(responsive_values) > 1:
+                    continue
+                responsive_zero_done = True
 
 
-        #balance_distribution = get_distribution_values(args.balance_dist, [balance_value, args.balance_std], num_neurons)
-        responsive_distribution = get_distribution_values(args.responsive_type, [responsive_val], num_neurons)
+            #balance_distribution = get_distribution_values(args.balance_dist, [balance_value, args.balance_std], num_neurons)
+            responsive_distribution = get_distribution_values(args.responsive_type, [responsive_val], num_neurons)
 
-        #Simulate in Environment A
-        tebc_responsive_neurons = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
-
-        # Profile the function
-        #cProfile.runctx('simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)', globals(), locals(), 'profile_stats.prof')
-        #p = pstats.Stats('profile_stats.prof')
-        #p.sort_stats('cumulative').print_stats(10)
-
-        # Now run the function normally to capture its output
-        spikesA, eyeblink_neuronsA, firingrate_envA, agentA = simulate_envA(agentA, position_data_envA, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values)
-        # also want a percent of place cells metric
-
-        if holdover == 1:
-            tebc_responsive_neurons = eyeblink_neuronsA.responsive_distribution
-        else:
+            #Simulate in Environment A
             tebc_responsive_neurons = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
 
-        # Simulate in Environment B using the parameters from Environment A
-        spikesB, eyeblink_neuronsB, firingrate_envB, agentB = simulate_envB(agentB, position_data_envB, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values)
+            # Profile the function
+            #cProfile.runctx('simulate_envA(agentA, position_data_envA, balance_distribution, responsive_distribution, tebc_responsive_neurons, cell_types)', globals(), locals(), 'profile_stats.prof')
+            #p = pstats.Stats('profile_stats.prof')
+            #p.sort_stats('cumulative').print_stats(10)
+
+            # Now run the function normally to capture its output
+            spikesA, eyeblink_neuronsA, firingrate_envA, agentA = simulate_envA(agentA, position_data_envA, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values)
+            # also want a percent of place cells metric
+
+            if holdover == 1:
+                tebc_responsive_neurons = eyeblink_neuronsA.responsive_distribution
+            else:
+                tebc_responsive_neurons = assign_tebc_types_and_responsiveness(num_neurons, responsive_distribution)
+
+            # Simulate in Environment B using the parameters from Environment A
+            spikesB, eyeblink_neuronsB, firingrate_envB, agentB = simulate_envB(agentB, position_data_envB, responsive_distribution, tebc_responsive_neurons, percent_place_cells_values)
 
 
 
-        ###PLOTTING
-        '''
-        ratinabox.autosave_plots = True
-        ratinabox.stylize_plots()
-        plt.show()
-        agentA.plot_trajectory()
-        plt.show()
-        agentA.plot_position_heatmap()
-        plt.show()
-        agentA.plot_histogram_of_speeds()
-        plt.show()
-        agentB.plot_histogram_of_speeds()
-        plt.show()
-        combined_neuronsA.plot_rate_timeseries()
-        plt.show()
-        combined_neuronsA.plot_rate_map()
-        plt.show()
-        combined_neuronsA.plot_place_cell_locations()
-        plt.show()
-        '''
-
-
-
-
-        #####save
-        # Construct the full file paths
-        filename_envA = f"PDM_response_envA_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}_holdovers_{args.holdover_type}.npy"
-        filename_envB = f"PDM_response_envB_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}_holdovers_{args.holdover_type}.npy"
-        full_path_envA = os.path.join(save_directory, filename_envA)
-        full_path_envB = os.path.join(save_directory, filename_envB)
-        # Save the response arrays to files
-
-
-        #np.save(full_path_envA, spikesA)
-        #np.save(full_path_envB, spikesB)
-
-        np.save(full_path_envA, firingrate_envA)
-        np.save(full_path_envB, firingrate_envB)
-
-        ######
-
-        # Assess learning transfer and other metrics
-        #organize to run in cebra
-        response_envA = np.transpose(spikesA)
-        response_envB = np.transpose(spikesB)
-
-
-        envA_eyeblink = position_data_envA[3].T
-        response_envA_test = response_envA[envA_eyeblink > 0,:]
-        envA_eyeblink = envA_eyeblink[envA_eyeblink > 0]
-        envA_eyeblink = np.where(envA_eyeblink <= 5, 1, 2)
-
-        envB_eyeblink = position_data_envB[3].T
-        response_envB_test = response_envB[envB_eyeblink > 0,:]
-        envB_eyeblink = envB_eyeblink[envB_eyeblink > 0]
-        envB_eyeblink = np.where(envB_eyeblink <= 5, 1, 2)
-
-
-        #run cebra decoding
-        fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA_test, envA_eyeblink, response_envB_test, envB_eyeblink)
-
-
-        #run position decoding for env A
-        posA = position_data_envA[1:3].T
-        vel = eyeblink_neuronsA.smoothed_velocity
-        vel= np.array(vel)
-        indices = np.where(vel > 0.02)[0]
-        posA = posA[indices]
-        response_envA = response_envA[indices]
-
-
-        pos_test_scoreA, pos_test_errA, dis_meanA, dis_medianA, pos_test_score_shuffA, pos_test_err_shuffA, dis_mean_shuffA, dis_median_shuffA = pos_decoding_self(response_envA, posA, .70)
-
-
-        #run position decoding for env B
-        posB = position_data_envB[1:3].T
-        vel = eyeblink_neuronsB.smoothed_velocity
-        vel= np.array(vel)
-        indices = np.where(vel > 0.02)[0]
-        posB = posB[indices]
-        response_envB = response_envB[indices]
-
-        pos_test_scoreB, pos_test_errB, dis_meanB, dis_medianB, pos_test_score_shuffB, pos_test_err_shuffB, dis_mean_shuffB, dis_median_shuffB = pos_decoding_self(response_envB, posB, .70)
+            ###PLOTTING
+            '''
+            ratinabox.autosave_plots = True
+            ratinabox.stylize_plots()
+            plt.show()
+            agentA.plot_trajectory()
+            plt.show()
+            agentA.plot_position_heatmap()
+            plt.show()
+            agentA.plot_histogram_of_speeds()
+            plt.show()
+            agentB.plot_histogram_of_speeds()
+            plt.show()
+            combined_neuronsA.plot_rate_timeseries()
+            plt.show()
+            combined_neuronsA.plot_rate_map()
+            plt.show()
+            combined_neuronsA.plot_place_cell_locations()
+            plt.show()
+            '''
 
 
 
 
-        # Construct the identifier for this iteration
-        identifier = f"responsive_{responsive_val}_{args.responsive_type}_PCs_{args.percent_place_cells}_holdovers_{args.holdovers}.npy"
+            #####save
+            # Construct the full file paths
+            filename_envA = f"PDM_response_envA_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}_holdovers_{args.holdover_type}.npy"
+            filename_envB = f"PDM_response_envB_responsive_{responsive_val}_{args.responsive_type}_perPCs_{percent_place_cell}_holdovers_{args.holdover_type}.npy"
+            full_path_envA = os.path.join(save_directory, filename_envA)
+            full_path_envB = os.path.join(save_directory, filename_envB)
+            # Save the response arrays to files
 
 
-        #Append the results to the file
-        results_file.write(f"Parameters: {identifier}\n")
-        results_file.write(f"fract_control_all: {fract_control_all}\n")
-        results_file.write(f"fract_test_all: {fract_test_all}\n")
-        results_file.write(f"pos decoding A: {err_allA}\n")
-        results_file.write(f"pos decoding A shuffled: {err_all_shuffA}\n")
-        results_file.write(f"pos decoding B: {err_allB}\n")
-        results_file.write(f"pos decoding B shuffled: {err_all_shuffB}\n")
-        results_file.write("\n")  # Add a newline for readability
+            #np.save(full_path_envA, spikesA)
+            #np.save(full_path_envB, spikesB)
+
+            np.save(full_path_envA, firingrate_envA)
+            np.save(full_path_envB, firingrate_envB)
+
+            ######
+
+            # Assess learning transfer and other metrics
+            #organize to run in cebra
+            response_envA = np.transpose(spikesA)
+            response_envB = np.transpose(spikesB)
 
 
-        # Print confirmation
+            envA_eyeblink = position_data_envA[3].T
+            response_envA_test = response_envA[envA_eyeblink > 0,:]
+            envA_eyeblink = envA_eyeblink[envA_eyeblink > 0]
+            envA_eyeblink = np.where(envA_eyeblink <= 5, 1, 2)
 
-        print(f"Saved results to {full_path_envA} and {full_path_envB}")
+            envB_eyeblink = position_data_envB[3].T
+            response_envB_test = response_envB[envB_eyeblink > 0,:]
+            envB_eyeblink = envB_eyeblink[envB_eyeblink > 0]
+            envB_eyeblink = np.where(envB_eyeblink <= 5, 1, 2)
+
+
+            #run cebra decoding
+            fract_control_all, fract_test_all = cond_decoding_AvsB(response_envA_test, envA_eyeblink, response_envB_test, envB_eyeblink)
+
+
+            #run position decoding for env A
+            posA = position_data_envA[1:3].T
+            vel = eyeblink_neuronsA.smoothed_velocity
+            vel= np.array(vel)
+            indices = np.where(vel > 0.02)[0]
+            posA = posA[indices]
+            response_envA = response_envA[indices]
+            #pos_test_scoreA, pos_test_errA, dis_meanA, dis_medianA, pos_test_score_shuffA, pos_test_err_shuffA, dis_mean_shuffA, dis_median_shuffA = pos_decoding_self(response_envA, posA, .70)
+
+
+            #run position decoding for env B
+            posB = position_data_envB[1:3].T
+            vel = eyeblink_neuronsB.smoothed_velocity
+            vel= np.array(vel)
+            indices = np.where(vel > 0.02)[0]
+            posB = posB[indices]
+            response_envB = response_envB[indices]
+            #pos_test_scoreB, pos_test_errB, dis_meanB, dis_medianB, pos_test_score_shuffB, pos_test_err_shuffB, dis_mean_shuffB, dis_median_shuffB = pos_decoding_self(response_envB, posB, .70)
+
+
+            #POS DECODE
+            err_allA, err_allB_usingA, err_all_shuffA, err_all_shuffB_usingA, err_allB_usingB = pos_decoding_AvsB(response_envA, posA, response_envB, posB, .7)
+
+            # Construct the identifier for this iteration
+            identifier = f"responsive_{responsive_val}_{args.responsive_type}_PCs_{args.percent_place_cells}.npy"
+
+
+            #make file types normal
+            percent_place_cell = percent_place_cell[0] if isinstance(percent_place_cell, list) else percent_place_cell
+            fract_control_all = fract_control_all[0] if isinstance(fract_control_all, list) else fract_control_all
+            fract_test_all = fract_test_all[0] if isinstance(fract_test_all, list) else fract_test_all
+
+
+            #Append the results to the file
+            results_file.write(f"Parameters: {identifier}\n")
+            results_file.write(f"fract_control_all: {fract_control_all}\n")
+            results_file.write(f"fract_test_all: {fract_test_all}\n")
+            results_file.write(f"pos decoding A: {err_allA}\n")
+            results_file.write(f"pos decoding A shuffled: {err_all_shuffA}\n")
+            results_file.write(f"pos decoding B using A: {err_allB_usingA}\n")
+            results_file.write(f"pos decoding B shuffled: {err_all_shuffB_usingA}\n")
+            results_file.write(f"pos decoding B: {err_allB_usingB}\n")
+            results_file.write("\n")  # Add a newline for readability
+
+            # Right before the problematic line
+
+            # Attempt to assign to the matrix
+            try:
+                results_matrix[run_count] = [
+                    responsive_val, percent_place_cell,
+                    fract_control_all, fract_test_all,
+                    *err_allA, *err_allB_usingA, *err_all_shuffA, *err_all_shuffB_usingA, *err_allB_usingB
+                ]
+            except ValueError as e:
+                print("Error occurred:", e)
+                print([
+                    responsive_val, percent_place_cell,
+                    fract_control_all, fract_test_all,
+                    *err_allA, *err_allB_usingA, *err_all_shuffA, *err_all_shuffB_usingA, *err_allB_usingB
+                ])
+
+            # At the end of each iteration, explicitly delete large objects
+            # Example: if `spikesA` and `spikesB` are large, you can delete them
+            del spikesA, spikesB, firingrate_envA, firingrate_envB
+            del response_envA, response_envB
+            del envA_eyeblink, envB_eyeblink
+
+            # Call garbage collector
+            gc.collect()
+            run_count += 1
+
+            # Print confirmation
+
+            #print(f"Saved results to {full_path_envA} and {full_path_envB}")
+
+# Get the current date
+current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+results_filename = f"PDM_results_matrix-response-{args.responsive_values}-{args.responsive_type}-PCs-{args.percent_place_cells}-holdover-{args.holdover_type}"
+
+# Construct filenames with the date and directory
+csv_filename = os.path.join(save_directory, f"{results_filename}_{current_date}.csv")
+npy_filename = os.path.join(save_directory, f"{results_filename}_{current_date}.npy")
+
+# Saving the results matrix
+np.savetxt(csv_filename, results_matrix, delimiter=",", header=",".join(headers), comments="")
+
+# If you want to save in binary format (without headers)
+np.save(npy_filename, results_matrix)
+
+print(f"Saved results to {save_directory}")

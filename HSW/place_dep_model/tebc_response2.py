@@ -61,7 +61,7 @@ def type_three_response(time_since_CS, baseline): #not moving, in field
         return baseline * 3 if time_since_CS == US_time else baseline
 
 
-def type_four_response(time_since_CS, baseline): #not moving, in field
+def type_four_response(time_since_CS, baseline): #not moving, out of field
     CS_duration = 0.25  # CS duration in seconds
     CS_to_US_delay = 0.5  # Delay between CS and US in seconds
     US_time = CS_duration + CS_to_US_delay  # Time when US occurs

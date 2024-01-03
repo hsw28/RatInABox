@@ -279,7 +279,7 @@ results_matrix = np.zeros((total_runs, num_columns))
 
 # Column headers
 headers = [
-    "balance_value", "balance_dist", "responsive_val", "responsive_type",
+    "balance_value", "responsive_val",
     "percent_place_cells", "fract_control_all", "fract_test_all",
     "err_allA_score", "err_allA_err", "err_allA_mean", "err_allA_median",
     "err_allB_usingA_score", "err_allB_usingA_err", "err_allB_usingA_mean", "err_allB_usingA_median",
@@ -480,9 +480,11 @@ with open(results_filepath, "w") as results_file:
 # Get the current date
 current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+results_filename = f"DM_results_matrix-balance-{args.balance_values}-{args.balance_dist}-std-{args.balance_std}-response-{args.responsive_values}-{args.responsive_type}-PCs-{args.percent_place_cells}"
+
 # Construct filenames with the date and directory
-csv_filename = os.path.join(save_directory, f"DM_results_matrix_{current_date}.csv")
-npy_filename = os.path.join(save_directory, f"DM_results_matrix_{current_date}.npy")
+csv_filename = os.path.join(save_directory, f"{results_filename}_{current_date}.csv")
+npy_filename = os.path.join(save_directory, f"{results_filename}_{current_date}.npy")
 
 # Saving the results matrix
 np.savetxt(csv_filename, results_matrix, delimiter=",", header=",".join(headers), comments="")

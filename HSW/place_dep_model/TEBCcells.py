@@ -79,14 +79,22 @@ class TEBC(PlaceCells):
 
         for i in range(self.num_neurons):
             if self.tebc_responsive_neurons[i]:
+                ##for testing
+                #in_field[i] = .4 #
+                #baseline[i] = .2 #
+
                 if (in_field[i] >= 0.2) and (current_velocity > 0.02): #in field running
                     tebc_response = type_one_response(time_since_CS, baseline[i])
+                #    print("resp 1")
                 if (in_field[i] < 0.2) and (current_velocity > 0.02): #out of field running
                     tebc_response = type_two_response(time_since_CS, baseline[i])
+                #    print("resp 2")
                 if (in_field[i] >= 0.2) and (current_velocity <= 0.02): #in field still
                     tebc_response = type_three_response(time_since_CS, baseline[i])
+                #    print("resp 3")
                 if (in_field[i] < 0.2) and (current_velocity <= 0.02): #out of field still
                     tebc_response = type_four_response(time_since_CS, baseline[i])
+                #    print("resp 4")
             else:
                  tebc_response = baseline[i]
 
