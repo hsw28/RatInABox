@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:a100:1
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --array=0-9 ## number of jobs to run "in parallel"
+#SBATCH --array=0-19 ## number of jobs to run "in parallel"
 #SBATCH --mem=220GB
 #SBATCH --time=24:00:00
 #SBATCH --job-name="sample_job_\${SLURM_ARRAY_TASK_ID}" ## use the task id in the name of the job
