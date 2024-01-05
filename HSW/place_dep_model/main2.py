@@ -298,10 +298,6 @@ with open(results_filepath, "w") as results_file:
             args.holdover_type = "off"
 
         for i in range(num_iters):
-            if responsive_val == 0:
-                if responsive_zero_done and len(responsive_values) > 1:
-                    continue
-                responsive_zero_done = True
 
 
             #balance_distribution = get_distribution_values(args.balance_dist, [balance_value, args.balance_std], num_neurons)

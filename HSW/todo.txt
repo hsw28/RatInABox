@@ -1,8 +1,5 @@
 todo:
 
-
-- fix cell types for dependant based on additive additive_model
-- check cell types for dependant and place models
-
-- adjsut how decoding values are saved
-- make everything a loop
+- fix env B decoding
+- rerun for zero values
+- decode based on bins....

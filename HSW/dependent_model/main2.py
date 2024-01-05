@@ -302,16 +302,6 @@ with open(results_filepath, "w") as results_file:
         print(percent_place_cell)
         for i in range(num_iters):
 
-            if balance_value == 0:
-                if balance_zero_done and len(balance_values) > 1:
-                    continue
-                balance_zero_done = True
-            if responsive_val == 0:
-                if responsive_zero_done and len(responsive_values) > 1:
-                    continue
-                responsive_zero_done = True
-
-
             balance_distribution = get_distribution_values(args.balance_dist, [balance_value, args.balance_std], num_neurons)
             responsive_distribution = get_distribution_values(args.responsive_type, [responsive_val], num_neurons)
 
