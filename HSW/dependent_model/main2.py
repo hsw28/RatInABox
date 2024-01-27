@@ -33,6 +33,8 @@ import random
 import datetime
 import gc
 import time
+import pandas as pd
+
 
 """
 Simulation Script for Neuronal Firing Rate Analysis
