@@ -22,4 +22,4 @@ export PYTHONPATH="${PYTHONPATH}:/home/hsw967/Programming/Hannahs-CEBRAs"
 
 # Run the Python script with hardcoded arguments
 #python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.2,.4,.6,.8,1 --responsive_type fixed --percent_place_cells 0,.2,.4,.6,.8,1 --num_iters 5 --optional_param work
-python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.10,.20,.30,.40 --responsive_type fixed --percent_place_cells0,.10,.20,.30,.40 --num_iters 5 --optional_param work
+python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.10,.20,.30,.40 --responsive_type fixed --percent_place_cells 0,.10,.20,.30,.40 --num_iters 5 --optional_param work
