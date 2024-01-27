@@ -143,8 +143,13 @@ if optional_param is not None:
     work = True
 
 
+###OLD WORK DIRECTORY
+#if work:
+#    save_directory = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/results'
+#    ratinabox.figure_directory = save_directory
+#    os.makedirs(save_directory, exist_ok=True)
 if work:
-    save_directory = '/home/hsw967/Programming/data_eyeblink/rat314/ratinabox_data/results'
+    save_directory = '/projects/p32072/Programming/data_eyeblink/rat314/ratinabox_data/dependent_results'
     ratinabox.figure_directory = save_directory
     os.makedirs(save_directory, exist_ok=True)
 else:
@@ -454,6 +459,18 @@ with open(results_filepath, "w") as results_file:
 
             # At the end of each iteration, explicitly delete large objects
             # Example: if `spikesA` and `spikesB` are large, you can delete them
+            current_date = datetime.datetime.now().strftime("%Y%m%d")
+            filename_spikesA = f'spikesA_balance_{balance_value}_responsive_{responsive_val}_PC_{percent_place_cell}_iteration_{i}_{current_date}.csv'
+            filename_spikesB = f'spikesB_balance_{balance_value}_responsive_{responsive_val}_PC_{percent_place_cell}_iteration_{i}_{current_date}.csv'
+            filename_firingrate_envA = f'firingrate_envA_balance_{balance_value}_responsive_{responsive_val}_PC_{percent_place_cell}_iteration_{i}_{current_date}.csv'
+            filename_firingrate_envB = f'firingrate_envB_balance_{balance_value}_responsive_{responsive_val}_PC_{percent_place_cell}_iteration_{i}_{current_date}.csv'
+
+            # Save to CSV
+            pd.DataFrame(spikesA).to_csv(filename_spikesA, index=False)
+            pd.DataFrame(spikesB).to_csv(filename_spikesB, index=False)
+            pd.DataFrame(firingrate_envA).to_csv(filename_firingrate_envA, index=False)
+            pd.DataFrame(firingrate_envB).to_csv(filename_firingrate_envB, index=False)
+
             del spikesA, spikesB, firingrate_envA, firingrate_envB
             del response_envA, response_envB
             del envA_eyeblink, envB_eyeblink

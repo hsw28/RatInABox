@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:a100:1
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --array=0-9 ## number of jobs to run "in parallel"
+#SBATCH --array=0-19 ## number of jobs to run "in parallel"
 #SBATCH --mem=220GB
 #SBATCH --time=24:00:00
 #SBATCH --job-name="sample_job_\${SLURM_ARRAY_TASK_ID}" ## use the task id in the name of the job
@@ -21,4 +21,5 @@ export PYTHONPATH="${PYTHONPATH}:/home/hsw967/Programming/RatInABox"
 export PYTHONPATH="${PYTHONPATH}:/home/hsw967/Programming/Hannahs-CEBRAs"
 
 # Run the Python script with hardcoded arguments
-python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.2,.4,.6,.8,1 --responsive_type fixed --percent_place_cells 0,.2,.4,.6,.8,1 --num_iters 5 --optional_param work
+#python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.2,.4,.6,.8,1 --responsive_type fixed --percent_place_cells 0,.2,.4,.6,.8,1 --num_iters 5 --optional_param work
+python /home/hsw967/Programming/RatInABox/HSW/additive_model/main2.py --balance_values 1 --balance_dist additive --responsive_values 0,.10,.20,.30,.40 --responsive_type fixed --percent_place_cells0,.10,.20,.30,.40 --num_iters 5 --optional_param work
